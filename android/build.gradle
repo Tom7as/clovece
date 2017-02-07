@@ -18,7 +18,7 @@ android {
         exclude 'META-INF/robovm/ios/robovm.xml'
     }
     defaultConfig {
-        applicationId "com.jerabek.cnz"
+        applicationId "com.jerabek.clovece"
         minSdkVersion 8
         targetSdkVersion 21
     }
@@ -71,7 +71,7 @@ task run(type: Exec) {
     }
 
     def adb = path + "/platform-tools/adb"
-    commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.jerabek.cnz/com.jerabek.cnz.AndroidLauncher'
+    commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.jerabek.clovece/com.jerabek.clovece.AndroidLauncher'
 }
 
 // sets up the Android Eclipse project, using the old Ant based build.

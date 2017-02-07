@@ -6,11 +6,8 @@
 	<inherits name='com.badlogic.gdx.ai' />
 	<inherits name='com.badlogic.ashley_gwt' />
 
-    <inherits name='com.jerabek.cnz.GdxDefinition' />
-    
-    <collapse-all-properties />
-    
-	<add-linker name="xsiframe"/>	
-	<set-configuration-property name="devModeRedirectEnabled" value="true"/>
-	<set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>	
+	<inherits name='CloveceNezlobSe' />
+	<entry-point class='com.jerabek.clovece.client.HtmlLauncher' />
+	<set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>
+	<set-configuration-property name="gdx.assetpath" value="../android/assets" />
 </module>

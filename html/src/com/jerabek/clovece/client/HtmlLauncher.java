@@ -1,9 +1,9 @@
-package com.jerabek.cns.client;
+package com.jerabek.clovece.client;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
 import com.badlogic.gdx.backends.gwt.GwtApplicationConfiguration;
-import com.jerabek.cns.CloveceNezlobSe;
+import com.jerabek.clovece.CloveceNezlobSe;
 
 public class HtmlLauncher extends GwtApplication {
 

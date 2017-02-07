@@ -1,10 +1,9 @@
-package com.jerabek.cnz;
+package com.jerabek.clovece;
 
 import android.os.Bundle;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.jerabek.cnz.CloveceNezlobSe;
 
 public class AndroidLauncher extends AndroidApplication {
 	@Override
@@ -12,5 +11,6 @@ public class AndroidLauncher extends AndroidApplication {
 		super.onCreate(savedInstanceState);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 		initialize(new CloveceNezlobSe(), config);
+
 	}
 }

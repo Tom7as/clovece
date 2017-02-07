@@ -1,11 +1,11 @@
-package com.jerabek.cns;
+package com.jerabek.clovece;
 
 import org.robovm.apple.foundation.NSAutoreleasePool;
 import org.robovm.apple.uikit.UIApplication;
 
 import com.badlogic.gdx.backends.iosrobovm.IOSApplication;
 import com.badlogic.gdx.backends.iosrobovm.IOSApplicationConfiguration;
-import com.jerabek.cns.CloveceNezlobSe;
+import com.jerabek.clovece.CloveceNezlobSe;
 
 public class IOSLauncher extends IOSApplication.Delegate {
     @Override
