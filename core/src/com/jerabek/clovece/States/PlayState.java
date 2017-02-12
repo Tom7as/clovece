@@ -28,7 +28,7 @@ public class PlayState extends State {
     private Vector2 groundPos1, groundPos2;
 
     private Array<Tube> tubes;
-    Stage stage;
+
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
@@ -45,7 +45,6 @@ public class PlayState extends State {
         for(int i = 1; i <= TUBE_COUNT; i++){
             tubes.add(new Tube(i * (TUBE_SPACING + Tube.TUBE_WIDTH)));
         }
-        stage = new Stage(new StretchViewport(CloveceNezlobSe.appWidth, CloveceNezlobSe.appHeight, cam));
 
     }
 
@@ -69,12 +68,13 @@ public class PlayState extends State {
                 tube.reposition(tube.getPosTopTube().x  + ((Tube.TUBE_WIDTH + TUBE_SPACING) * TUBE_COUNT));
             }
 
-            if(tube.collides(bird.getBounds()))
-                gsm.set(new MenuState(gsm));
+//            if(tube.collides(bird.getBounds()))
+//                gsm.set(new MenuState(gsm));
         }
 
         if(bird.getPosition().y <= ground.getHeight() + GROUND_Y_OFFSET)
-            gsm.set(new MenuState(gsm));
+            bird.getPosition().y = 0;
+          //  gsm.set(new MenuState(gsm));
         cam.update();
 
     }

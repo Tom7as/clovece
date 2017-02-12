@@ -1,13 +1,11 @@
 package com.jerabek.clovece.States;
 
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 
-
 /**
- * Created by Tomas on 07.02.2017.
+ * Created by Tomas on 12.02.2017.
  */
 
 public abstract class State {

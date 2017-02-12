@@ -7,8 +7,8 @@ import com.jerabek.clovece.CloveceNezlobSe;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.height = CloveceNezlobSe.WIDTH;
-		config.height = CloveceNezlobSe.HEIGHT;
+		config.height = 1000;
+		config.height = 800;
 		config.title = CloveceNezlobSe.TITLE;
 		new LwjglApplication(new CloveceNezlobSe(), config);
 	}
