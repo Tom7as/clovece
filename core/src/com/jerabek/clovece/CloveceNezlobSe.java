@@ -6,13 +6,13 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.jerabek.clovece.States.GameStateManager;
-import com.jerabek.clovece.States.BoardState;
+import com.jerabek.clovece.States.PlayState;
 
 public class CloveceNezlobSe extends ApplicationAdapter {
-//	public static final float appWidth = 960;
-//	public static final float appHeight = 1600;
-	public static final float appWidth = 960;
-	public static final float appHeight = 1600;
+
+	public static final float appWidth = 1000;
+	public static final float appHeight = 1000;
+
 	public static final String TITLE = "Clovece nezlob se";
 	private GameStateManager gsm;
 	private SpriteBatch batch;
@@ -28,13 +28,13 @@ public class CloveceNezlobSe extends ApplicationAdapter {
 		//music.setLooping(true);
 		//music.setVolume(0.1f);
 		//music.play();
-		Gdx.gl.glClearColor(1, 0, 0, 1);
-		gsm.push(new BoardState(gsm));
+		//Gdx.gl.glClearColor(1, 0, 0, 1);
+		gsm.push(new PlayState(gsm));
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(255, 225, 150, 1);
+		Gdx.gl.glClearColor(1f, 0.89f, 0.59f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		gsm.update(Gdx.graphics.getDeltaTime());
 		gsm.render(batch);

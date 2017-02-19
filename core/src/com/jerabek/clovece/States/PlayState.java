@@ -7,23 +7,31 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.DistanceFieldFont;
+
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScalingViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+
+import java.util.Random;
 
 import static com.badlogic.gdx.math.MathUtils.random;
 import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
@@ -31,7 +39,7 @@ import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 /**
  * Created by Tomas on 2/11/2017.
  */
-public class BoardState extends State {
+public class PlayState extends State {
 
     //renderovani textu
     private static final String TEXT = "Ta";
@@ -53,10 +61,8 @@ public class BoardState extends State {
             setUniformf("u_upper", 0.5f + delta);
         }
     }
-    private SpriteBatch spriteBatch;
-    private Texture descriptionTexture;
+
     private Texture distanceFieldTexture;
-    private BitmapFont descriptionFont;
     private BitmapFont distanceFieldFont;
     private DistanceFieldShader distanceFieldShader;
     private GlyphLayout layout = new GlyphLayout();
@@ -64,7 +70,10 @@ public class BoardState extends State {
     private Texture[] fieldImg = new Texture[5];
     private Texture diceImg;
     private Stage stage;
+
+    private LabelStyle labelStyle;
     private Label outputLabel;
+    private BitmapFont arial;
 
     private int zoom = 70;
     private float fieldSize = 80, smallFieldSize = fieldSize*0.8f, pieceSize = 43;
@@ -73,18 +82,24 @@ public class BoardState extends State {
     private int playersCount = 4, pieceCount = 4;
     private int fieldScan = 40,pieceArray=0;
     private Piece[] piece = new Piece[pieceCount*playersCount ];
-    private int dice, currentPlayer=1;
+    private int dice, currentPlayer=1, nextPlayer=2;
 
     Skin orangeSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     TextButton button3 = new TextButton("Roll dice", orangeSkin);
 
 
 
-    public BoardState(GameStateManager gsm) {
+    public PlayState(GameStateManager gsm) {
         super(gsm);
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(960, 1280, 960, 1600, cam));
+        stage = new Stage(new ExtendViewport(850,850*1.33f,850,850*1.67f, cam));
+        //stage = new Stage(new ExtendViewport(1000, 1000, cam));
         Gdx.input.setInputProcessor(stage);
+
+        Texture dice = new Texture("dice.png");
+        arial = new BitmapFont(Gdx.files.internal("arial-15.fnt"), false);
+        labelStyle = new LabelStyle(arial, COLOR.BLACK);
+
 
         diceImg = new Texture("dice.png");
         fieldImg[0] = new Texture("pole.png");
@@ -107,10 +122,9 @@ public class BoardState extends State {
         // obsahuje herni kostku
         //piece[0] = new Piece(0, 0, 0, 100);
 
-        diceButton();
 
         label();
-
+        diceButton();
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), true);
         distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
@@ -134,24 +148,19 @@ public class BoardState extends State {
 //
 //            }
 
-            nextPlayer();
             //gsm.set(new PlayState(gsm));
         }
     }
 
     private void throwMessage(SpriteBatch sb){
-
         sb.draw(diceImg, cam.position.x - diceImg.getWidth() / 2, cam.position.y - diceImg.getHeight() / 2);
-
     }
 
     @Override
     public void update(float dt) {
-
         //refreshBoard();
-//        piece[f].update(dt);
+        //piece[f].update(dt);
         //piece[f].getPosition().x + 80;
-
     }
 
     @Override
@@ -162,14 +171,23 @@ public class BoardState extends State {
         refreshBoard(sb);
         drawPieces(sb);
         int x = 10;
-        x += drawFont(sb, distanceFieldFont, true, true, 1f, x);
+        //x += drawFont(sb, distanceFieldFont, true, true, 1f, x);
         handleInput();
         sb.end();
 
-
-
         stage.act();
         stage.draw();
+    }
+
+    private void round(){
+        throwDice();
+        for (fieldScan = 0; fieldScan < piece.length; fieldScan++) {
+            piece[fieldScan].setFieldNumber(random(0,39));
+            piece[fieldScan].setPosition(data[piece[fieldScan].getFieldNumber()].getX(), data[piece[fieldScan].getFieldNumber()].getY());
+            }
+        nextPlayer();
+        button3.setVisible(true);
+        //startMove()
     }
 
     private void drawPieces(SpriteBatch sb){
@@ -201,39 +219,44 @@ public class BoardState extends State {
 
     private int throwDice(){
         dice = random(1,6);
+        outputLabel.setText("Player " + currentPlayer + " threw " + dice);
         return dice;
     }
 
-    private int nextPlayer(){
-        currentPlayer++;
-        if(currentPlayer > 4)
-            return currentPlayer = 1;
-        else return currentPlayer;
+    private void nextPlayer(){
+        currentPlayer=nextPlayer;
+        nextPlayer++;
+        if(nextPlayer > 4)
+            nextPlayer = 1;
+        //outputLabel.setText("Player" + currentPlayer +" is on turn");
     }
 
     public void diceButton(){
-        button3.setSize(diceImg.getWidth()*2,diceImg.getHeight()*0.7f);
-        button3.setPosition(cam.position.x - diceImg.getWidth() , cam.position.y - diceImg.getHeight() *0.35f);
+        button3.setSize(500,110);
+        button3.setPosition(cam.position.x - button3.getWidth() / 2, cam.position.y - button3.getHeight() * 0.35f - 7 * zoom );
         button3.getLabel().setFontScale(2,2);
         button3.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-                outputLabel.setText("Press a Button");
+                //outputLabel.setText("Player" + nextPlayer +" is on turn");
+                button3.setVisible(false);
+                round();
             }
             @Override
             public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-                outputLabel.setText("Pressed Image Button");
                 return true;
             }
         });
         stage.addActor(button3);
     }
     public void label(){
-        outputLabel = new Label("Press a Button",orangeSkin);
-        outputLabel.setSize(Gdx.graphics.getWidth(),50);
-        outputLabel.setPosition(0,20);
+
+        outputLabel = new Label("Player " + currentPlayer + " is on turn",orangeSkin);
+        outputLabel.setSize(600,80);
+        outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
         outputLabel.setFontScale(6,6);
+
 
         stage.addActor(outputLabel);
     }
@@ -276,6 +299,7 @@ public class BoardState extends State {
             y += font.getLineHeight();
             spriteBatch.flush();
         }
+        getBaselineShift(distanceFieldFont);
         return (int)Math.ceil(maxWidth);
     }
 
@@ -291,5 +315,8 @@ public class BoardState extends State {
         distanceFieldFont.dispose();
         distanceFieldShader.dispose();
         System.out.println("Board Disposed");
+    }
+    public void saveGame(){
+
     }
 }
