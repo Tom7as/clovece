@@ -38,8 +38,15 @@ public class Piece {
         this.velocity = velocity;
     }
 
+    public Vector3 getPosition() {
+        return position;
+    }
+
     public void setPosition(Vector3 position) {
         this.position = position;
+    }
+    public void setPosition(int x, int y) {
+        this.position.set(x,y,0);
     }
 
     Piece(int x, int y, int player, int startFieldNumber){
@@ -48,10 +55,6 @@ public class Piece {
         String[] pieceTexture = new String[]{"dice.png","panakR.png", "panakY.png", "panakG.png", "panakB.png"};
         texture = new Texture(pieceTexture[player]);
         fieldNumber = startFieldNumber;
-    }
-
-    public Vector3 getPosition() {
-        return position;
     }
 
     public void move(){//SpriteBatch sb, int position, Texture texture
