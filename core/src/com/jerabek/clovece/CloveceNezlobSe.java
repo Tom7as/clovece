@@ -4,20 +4,15 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.jerabek.clovece.States.GameStateManager;
-import com.jerabek.clovece.States.MenuState;
-
-import java.awt.Point;
+import com.jerabek.clovece.States.BoardState;
 
 public class CloveceNezlobSe extends ApplicationAdapter {
+//	public static final float appWidth = 960;
+//	public static final float appHeight = 1600;
 	public static final float appWidth = 960;
 	public static final float appHeight = 1600;
-
 	public static final String TITLE = "Clovece nezlob se";
 	private GameStateManager gsm;
 	private SpriteBatch batch;
@@ -34,13 +29,12 @@ public class CloveceNezlobSe extends ApplicationAdapter {
 		//music.setVolume(0.1f);
 		//music.play();
 		Gdx.gl.glClearColor(1, 0, 0, 1);
-		gsm.push(new MenuState(gsm));
-
-
+		gsm.push(new BoardState(gsm));
 	}
 
 	@Override
 	public void render () {
+		Gdx.gl.glClearColor(255, 225, 150, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		gsm.update(Gdx.graphics.getDeltaTime());
 		gsm.render(batch);
@@ -50,7 +44,7 @@ public class CloveceNezlobSe extends ApplicationAdapter {
 	@Override
 	public void dispose() {
 		super.dispose();
-		music.dispose();
+		//music.dispose();
 	}
 
 
