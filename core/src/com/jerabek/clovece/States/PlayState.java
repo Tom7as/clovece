@@ -31,6 +31,8 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScalingViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import static com.badlogic.gdx.math.MathUtils.random;
@@ -81,7 +83,8 @@ public class PlayState extends State {
 
     private int playersCount = 4, pieceCount = 4;
     private int fieldScan = 40,pieceArray=0;
-    private Piece[] piece = new Piece[pieceCount*playersCount ];
+    private Piece[] piece = new Piece[pieceCount*playersCount];
+    private Piece[] pieceSort = new Piece[pieceCount*playersCount];
     private int dice, currentPlayer=1, nextPlayer=2;
 
     Skin orangeSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
@@ -92,7 +95,7 @@ public class PlayState extends State {
     public PlayState(GameStateManager gsm) {
         super(gsm);
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(850,850*1.33f,850,850*1.67f, cam));
+        stage = new Stage(new ExtendViewport(850,850*1.33f,850,850*1.77f, cam));
         //stage = new Stage(new ExtendViewport(1000, 1000, cam));
         Gdx.input.setInputProcessor(stage);
 
@@ -180,17 +183,62 @@ public class PlayState extends State {
     }
 
     private void round(){
-        throwDice();
-        for (fieldScan = 0; fieldScan < piece.length; fieldScan++) {
-            piece[fieldScan].setFieldNumber(random(0,39));
-            piece[fieldScan].setPosition(data[piece[fieldScan].getFieldNumber()].getX(), data[piece[fieldScan].getFieldNumber()].getY());
+        int dice = throwDice();
+        if(getMovablePieces(currentPlayer, dice) == null) {
+            nextPlayer();
+        }
+        else {
+            //markTargetFields();//možná cílová pole
+
+            for (int m=dice; m == 0; m--){
+                piece[getTouchedPieces()].setPosition(data[piece[getTouchedPieces()].getFieldNumber()].getFieldCoordinates());
+                ; //posun o 1 pole ( dostat input, kliknutej piece)
             }
-        nextPlayer();
+            nextPlayer();
+        //if(dice==6) round();
+        }
+
+        //throwDice();
+//        for (fieldScan = 0; fieldScan < piece.length; fieldScan++) {
+//            piece[fieldScan].setFieldNumber(random(0,70));
+//            piece[fieldScan].setPosition(data[piece[fieldScan].getFieldNumber()].getX(), data[piece[fieldScan].getFieldNumber()].getY());
+//            }
+//        nextPlayer();
         button3.setVisible(true);
-        //startMove()
+
+    }
+
+    private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
+        ArrayList<Integer> movablePieces = new ArrayList<Integer>();
+        for (int i = 0; i < piece.length; i++) {
+            if(piece[i].getPlayer()==currentPlayer) {// pridat podminku na dice = 1-5
+               movablePieces.add(piece[i].getFieldNumber());
+            }
+        }
+        return movablePieces;
+    }
+
+    private int getTouchedPieces() {
+        return 1;
     }
 
     private void drawPieces(SpriteBatch sb){
+
+        pieceSort = piece;
+        //seřazení pro odstranení překryvů
+        for (int i = 0; i<pieceSort.length; i++)
+        {
+            for (int j = 0; j<pieceSort.length; j++)
+            {
+                if (pieceSort[i].getPosition().y > pieceSort[j].getPosition().y)
+                {
+                    Piece temp = pieceSort[i];
+                    pieceSort[i] = pieceSort[j];
+                    pieceSort[j] = temp;
+                }
+            }
+        }
+
         for(Piece pieces : piece)
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getPosition().x * zoom - pieceSize * 0.5f,

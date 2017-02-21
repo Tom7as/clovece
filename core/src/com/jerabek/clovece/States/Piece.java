@@ -2,6 +2,7 @@ package com.jerabek.clovece.States;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
@@ -14,9 +15,10 @@ import sun.java2d.loops.DrawPath;
 public class Piece {
     private int fieldNumber;
     private static final int MOVEMENT = 100;
-    private Vector3 position;
-    private Vector3 velocity;
+    private Vector2 position;
+    private Vector2 velocity;
     private Texture texture;
+    private int player;
 
     public int getFieldNumber() {
         return fieldNumber;
@@ -30,36 +32,45 @@ public class Piece {
         return texture;
     }
 
-    public Vector3 getVelocity() {
+    public Vector2 getVelocity() {
         return velocity;
     }
 
-    public void setVelocity(Vector3 velocity) {
+    public void setVelocity(Vector2 velocity) {
         this.velocity = velocity;
     }
 
-    public Vector3 getPosition() {
+    public Vector2 getPosition() {
         return position;
     }
 
-    public void setPosition(Vector3 position) {
+    public void setPosition(Vector2 position) {
         this.position = position;
     }
     public void setPosition(int x, int y) {
-        this.position.set(x,y,0);
+        this.position.set(x,y);
     }
 
-    Piece(int x, int y, int player, int startFieldNumber){
-        position = new Vector3(x, y, 0);
-        velocity = new Vector3(0, 0, 0);
+    public int getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(int player) {
+        this.player = player;
+    }
+
+    Piece(int x, int y, int playerId, int startFieldNumber){
+        position = new Vector2(x, y);
+        velocity = new Vector2(0, 0);
         String[] pieceTexture = new String[]{"dice.png","panakR.png", "panakY.png", "panakG.png", "panakB.png"};
-        texture = new Texture(pieceTexture[player]);
+        player = playerId;
+        texture = new Texture(pieceTexture[playerId]);
         fieldNumber = startFieldNumber;
     }
 
-    public void move(){//SpriteBatch sb, int position, Texture texture
-        this.position.x = 0;
-        this.position.y = 0;
+    public void movePiece(int x, int y){//SpriteBatch sb, int position, Texture texture
+        this.position.x = x;
+        this.position.y = y;
     }
 
     void update(float dt){

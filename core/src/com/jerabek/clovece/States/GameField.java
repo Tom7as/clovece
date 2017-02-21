@@ -37,6 +37,12 @@ public class GameField {
         return sequence;
     }
 
+    public Vector2 getFieldCoordinates(){
+        Vector2 souradnice = null;
+        souradnice.set(getX(), getY());
+        return souradnice;
+    }
+
     int getX() {
         return x;
     }
