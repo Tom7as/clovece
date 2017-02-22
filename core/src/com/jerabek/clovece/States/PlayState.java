@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -26,17 +26,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScalingViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
 
 import static com.badlogic.gdx.math.MathUtils.random;
-import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
 /**
  * Created by Tomas on 2/11/2017.
@@ -44,7 +37,7 @@ import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 public class PlayState extends State {
 
     //renderovani textu
-    private static final String TEXT = "Ta";
+    private static final String TEXT = "textstring";
     private static final Color COLOR = Color.BLACK;
     private static final float[] SCALES = {0.25f, 0.5f, 1, 2, 4};
 
@@ -70,25 +63,25 @@ public class PlayState extends State {
     private GlyphLayout layout = new GlyphLayout();
 
     private Texture[] fieldImg = new Texture[5];
-    private Texture diceImg;
     private Stage stage;
 
     private LabelStyle labelStyle;
     private Label outputLabel;
-    private BitmapFont arial;
 
     private int zoom = 70;
     private float fieldSize = 80, smallFieldSize = fieldSize*0.8f, pieceSize = 43;
+
     private GameField[] data = GameField.getData();
 
-    private int playersCount = 4, pieceCount = 4;
-    private int fieldScan = 40,pieceArray=0;
-    private Piece[] piece = new Piece[pieceCount*playersCount];
-    private Piece[] pieceSort = new Piece[pieceCount*playersCount];
-    private int dice, currentPlayer=1, nextPlayer=2;
+    private ArrayList<Integer> movablePieces = new ArrayList<Integer>();
 
-    Skin orangeSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
-    TextButton button3 = new TextButton("Roll dice", orangeSkin);
+    private int playersCount = 4, pieceCount = 4;
+    private Piece[] piece = new Piece[pieceCount*playersCount];
+
+    private int dice, currentPlayer=1, nextPlayer=2, touchedPieces;
+
+    private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
+    private TextButton rollButton = new TextButton("Roll dice", comicSkin);
 
 
 
@@ -96,67 +89,48 @@ public class PlayState extends State {
         super(gsm);
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
         stage = new Stage(new ExtendViewport(850,850*1.33f,850,850*1.77f, cam));
-        //stage = new Stage(new ExtendViewport(1000, 1000, cam));
+
         Gdx.input.setInputProcessor(stage);
 
         Texture dice = new Texture("dice.png");
-        arial = new BitmapFont(Gdx.files.internal("arial-15.fnt"), false);
-        labelStyle = new LabelStyle(arial, COLOR.BLACK);
 
+        distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
+        distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
+                distanceFieldTexture), false);
+        distanceFieldFont.setColor(COLOR);
+        distanceFieldShader = new DistanceFieldShader();
+        labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
 
-        diceImg = new Texture("dice.png");
         fieldImg[0] = new Texture("pole.png");
         fieldImg[1] = new Texture("poleR.png");
         fieldImg[2] = new Texture("poleY.png");
         fieldImg[3] = new Texture("poleG.png");
         fieldImg[4] = new Texture("poleB.png");
 
-        //for(int i = 0; i <= playersCount * pieceCount; i++) pouziti pro data.setPlayer a nasadit panacky do pole dat
-        // obsahuje herni figurky prop všechny hráče
-        for (fieldScan = 40; fieldScan < data.length; fieldScan++) {
-            if (data[fieldScan].getPlayer() > 0) {
-                piece[pieceArray] = new Piece(data[fieldScan].getX(),
-                                     data[fieldScan].getY(),
-                                     data[fieldScan].getPlayer(),
-                                     data[fieldScan].getSequence());
-                pieceArray++;
+        for(int a=0; a < playersCount; a++){
+            for(int b=0; b < pieceCount; b++){
+                piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
+                                         a*4+b,
+                                         data[40+a*8+b].getY(),
+                                         a,
+                                         40+a*8+b );
+                data[40+a*8+b].setPieces(a*4+b);
             }
         }
-        // obsahuje herni kostku
-        //piece[0] = new Piece(0, 0, 0, 100);
-
 
         label();
-        diceButton();
-
-        distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), true);
-        distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
-                distanceFieldTexture), true);
-        distanceFieldFont.setColor(COLOR);
-        distanceFieldShader = new DistanceFieldShader();
+        rollButton();
 
     }
-
-
 
     @Override
     public void handleInput() {
         if(Gdx.input.justTouched()){
-//            button3.setVisible(false);
-//            piece[0].move();
-//            piece[0].
-
-//            dice = throwDice();
-//            while(dice > 0){
-//
-//            }
-
-            //gsm.set(new PlayState(gsm));
         }
     }
 
     private void throwMessage(SpriteBatch sb){
-        sb.draw(diceImg, cam.position.x - diceImg.getWidth() / 2, cam.position.y - diceImg.getHeight() / 2);
+        //sb.draw(dice, cam.position.x - dice.getWidth() / 2, cam.position.y - dice.getHeight() / 2);
     }
 
     @Override
@@ -170,12 +144,10 @@ public class PlayState extends State {
     public void render(SpriteBatch sb) {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
-
         refreshBoard(sb);
-        drawPieces(sb);
-        int x = 10;
+        paintPieces(sb);
+        //int x = 10;
         //x += drawFont(sb, distanceFieldFont, true, true, 1f, x);
-        handleInput();
         sb.end();
 
         stage.act();
@@ -183,48 +155,94 @@ public class PlayState extends State {
     }
 
     private void round(){
+        outputLabel.setText("Player " + currentPlayer + " is on turn");
+
         int dice = throwDice();
-        if(getMovablePieces(currentPlayer, dice) == null) {
-            nextPlayer();
-        }
-        else {
+        getMovablePieces(currentPlayer, dice);
+        if(!movablePieces.isEmpty())  {
             //markTargetFields();//možná cílová pole
+            //select piece to move
+            int fromField = movablePieces.get(getTouchedPieces());
+            Piece tempPiece = piece[data[fromField].getPieces()];
+            startMove(tempPiece, fromField);
 
-            for (int m=dice; m == 0; m--){
-                piece[getTouchedPieces()].setPosition(data[piece[getTouchedPieces()].getFieldNumber()].getFieldCoordinates());
-                ; //posun o 1 pole ( dostat input, kliknutej piece)
             }
-            nextPlayer();
-        //if(dice==6) round();
-        }
 
-        //throwDice();
-//        for (fieldScan = 0; fieldScan < piece.length; fieldScan++) {
-//            piece[fieldScan].setFieldNumber(random(0,70));
-//            piece[fieldScan].setPosition(data[piece[fieldScan].getFieldNumber()].getX(), data[piece[fieldScan].getFieldNumber()].getY());
-//            }
-//        nextPlayer();
-        button3.setVisible(true);
+        nextPlayer();
+        outputLabel.setText("Player " + currentPlayer + " is on turn");
+        rollButton.setVisible(true);
+        movablePieces.clear();
 
     }
 
+    public void startMove(Piece tempPiece,int field){
+        Vector2 vector;
+        if(field >= 0 && field <= 39){ // posunout dal
+            //for (int m = 0; m < dice; m++) {//posun o 1 pole ( dostat input, kliknutej piece)
+                finishMove(tempPiece, field);
+            //}
+        }
+        else { // nasadit
+
+            finishMove(tempPiece, field);
+        }
+    }
+
+    private void finishMove(Piece tempPiece, int fromField) {
+        int targetPiece = data[fromField+dice].getPieces();
+        if(targetPiece == 0) {
+
+            tempPiece.setFieldNumber(dice+fromField);//funkci na validovani - podle hrace posovat o 10
+            tempPiece.setPosition(data[fromField+dice].getFieldCoordinates());
+            data[fromField+dice].setPieces(tempPiece.getPieceId());//nastav novej
+            data[fromField].setPieces(0);//vynuluj starej
+        }
+        else {
+            if(targetPiece == currentPlayer){ // validovat dřív že neskočí na sveho --> v getMovablePiece
+            }
+            else {
+
+                kickPiece(targetPiece);
+
+                tempPiece.setFieldNumber(currentPlayer*10);//funkci na validovani - podle hrace posovat o 10
+                tempPiece.setPosition(data[currentPlayer*10].getFieldCoordinates());
+                data[currentPlayer*10].setPieces(tempPiece.getPieceId());//nastav novej
+                data[fromField].setPieces(0);//vynuluj starej
+
+            }
+        }
+    }
+
+    private void kickPiece(int targetField){
+        int startField = piece[targetField].getStartFieldNumber();
+        piece[targetField].setFieldNumber(startField);
+        piece[targetField].setPosition(data[startField].getFieldCoordinates());
+    }
+
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
-        ArrayList<Integer> movablePieces = new ArrayList<Integer>();
+
         for (int i = 0; i < piece.length; i++) {
             if(piece[i].getPlayer()==currentPlayer) {// pridat podminku na dice = 1-5
-               movablePieces.add(piece[i].getFieldNumber());
+                if ((piece[i].getFieldNumber() < 40))
+                    movablePieces.add(piece[i].getFieldNumber());
+                else {
+                    if ((dice == 6)) {
+                        movablePieces.add(piece[i].getFieldNumber());
+                    }
+                }
             }
         }
         return movablePieces;
     }
 
     private int getTouchedPieces() {
-        return 1;
+        touchedPieces = 1;
+        return touchedPieces;
     }
 
-    private void drawPieces(SpriteBatch sb){
-
-        pieceSort = piece;
+    private void paintPieces(SpriteBatch sb){
+        Piece[] pieceSort;
+        pieceSort = piece.clone();
         //seřazení pro odstranení překryvů
         for (int i = 0; i<pieceSort.length; i++)
         {
@@ -239,7 +257,7 @@ public class PlayState extends State {
             }
         }
 
-        for(Piece pieces : piece)
+        for(Piece pieces : pieceSort)
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getPosition().x * zoom - pieceSize * 0.5f,
                     cam.position.y + pieces.getPosition().y * zoom - pieceSize * 0.4f);
@@ -247,10 +265,10 @@ public class PlayState extends State {
 
     private void refreshBoard(SpriteBatch sb) {
         for (GameField aData : data) {
-//            aData.getSequence();
+//            aData.getField();
 //            aData.getColor();
 
-            if (aData.getSequence() < 40) {
+            if (aData.getField() < 40) {
                 sb.draw(fieldImg[aData.getColor()],
                         cam.position.x + aData.getX() * zoom - fieldSize * 0.5f,
                         cam.position.y + aData.getY() * zoom - fieldSize * 0.5f);
@@ -279,15 +297,15 @@ public class PlayState extends State {
         //outputLabel.setText("Player" + currentPlayer +" is on turn");
     }
 
-    public void diceButton(){
-        button3.setSize(500,110);
-        button3.setPosition(cam.position.x - button3.getWidth() / 2, cam.position.y - button3.getHeight() * 0.35f - 7 * zoom );
-        button3.getLabel().setFontScale(2,2);
-        button3.addListener(new InputListener(){
+    public void rollButton(){
+        rollButton.setSize(500,110);
+        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - rollButton.getHeight() * 0.35f - 7 * zoom );
+        rollButton.getLabel().setFontScale(2,2);
+        rollButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
                 //outputLabel.setText("Player" + nextPlayer +" is on turn");
-                button3.setVisible(false);
+                rollButton.setVisible(false);
                 round();
             }
             @Override
@@ -295,16 +313,16 @@ public class PlayState extends State {
                 return true;
             }
         });
-        stage.addActor(button3);
+        stage.addActor(rollButton);
     }
-    public void label(){
 
-        outputLabel = new Label("Player " + currentPlayer + " is on turn",orangeSkin);
-        outputLabel.setSize(600,80);
+    public void label(){
+        outputLabel = new Label("Player " + currentPlayer + " is on turn",comicSkin);
+        outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
-        outputLabel.setFontScale(6,6);
-
+        outputLabel.setFontScale(2,2);
+        outputLabel.setStyle(labelStyle);
 
         stage.addActor(outputLabel);
     }
@@ -364,6 +382,8 @@ public class PlayState extends State {
         distanceFieldShader.dispose();
         System.out.println("Board Disposed");
     }
+
+    //// TODO: 22.02.2017 SAVEGAME
     public void saveGame(){
 
     }

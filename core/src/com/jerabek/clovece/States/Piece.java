@@ -13,12 +13,34 @@ import sun.java2d.loops.DrawPath;
  */
 
 public class Piece {
-    private int fieldNumber;
-    private static final int MOVEMENT = 100;
+    private int fieldNumber, startFieldNumber;
     private Vector2 position;
     private Vector2 velocity;
     private Texture texture;
-    private int player;
+    private int player, pieceId;
+
+    public int getPieceId() {
+        return pieceId;
+    }
+
+    public void setPieceId(int pieceId) {
+        this.pieceId = pieceId;
+    }
+
+    Piece(int x, int id, int y, int playerId, int FieldNumber){
+        position = new Vector2(x, y);
+        pieceId = id;
+        velocity = new Vector2(0, 0);
+        player = playerId;
+        String[] pieceTexture = new String[]{"panakR.png", "panakY.png", "panakG.png", "panakB.png"};
+        texture = new Texture(pieceTexture[playerId]);
+        fieldNumber = FieldNumber;
+        startFieldNumber = FieldNumber;
+    }
+
+    public int getStartFieldNumber() {
+        return startFieldNumber;
+    }
 
     public int getFieldNumber() {
         return fieldNumber;
@@ -59,23 +81,14 @@ public class Piece {
         this.player = player;
     }
 
-    Piece(int x, int y, int playerId, int startFieldNumber){
-        position = new Vector2(x, y);
-        velocity = new Vector2(0, 0);
-        String[] pieceTexture = new String[]{"dice.png","panakR.png", "panakY.png", "panakG.png", "panakB.png"};
-        player = playerId;
-        texture = new Texture(pieceTexture[playerId]);
-        fieldNumber = startFieldNumber;
-    }
-
     public void movePiece(int x, int y){//SpriteBatch sb, int position, Texture texture
         this.position.x = x;
         this.position.y = y;
     }
 
     void update(float dt){
-
     }
+
     public void dispose(){
         texture.dispose();
 
