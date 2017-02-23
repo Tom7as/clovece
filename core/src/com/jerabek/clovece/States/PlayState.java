@@ -78,7 +78,7 @@ public class PlayState extends State {
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
 
-    private int dice, currentPlayer=1, nextPlayer=2, touchedPieces;
+    private int dice, currentPlayer=0, nextPlayer=1, touchedPieces;
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
@@ -102,10 +102,11 @@ public class PlayState extends State {
         labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
 
         fieldImg[0] = new Texture("pole.png");
-        fieldImg[1] = new Texture("poleR.png");
+        fieldImg[1] = new Texture("poleB.png");
         fieldImg[2] = new Texture("poleY.png");
-        fieldImg[3] = new Texture("poleG.png");
-        fieldImg[4] = new Texture("poleB.png");
+        fieldImg[3] = new Texture("poleR.png");
+        fieldImg[4] = new Texture("poleG.png");
+
 
         for(int a=0; a < playersCount; a++){
             for(int b=0; b < pieceCount; b++){
@@ -155,40 +156,52 @@ public class PlayState extends State {
 
     private void round(){
         outputLabel.setText("Player " + currentPlayer + " is on turn");
-        int nasazeni = 0;
+        boolean nasazeni = false;
         int dice = throwDice();
         getMovablePieces(currentPlayer, dice);
         if(!movablePieces.isEmpty()) {
             //markTargetFields();//možná cílová pole
             //select piece to move
             int fromField = movablePieces.get(getTouchedPieces());
-            if (fromField > 39){nasazeni = 1;}
+            if (fromField > 39){nasazeni = true;}
             Piece movingPiece = piece[data[fromField].getPieces()];
             startMove(movingPiece, fromField, nasazeni);
             }
 
-        nextPlayer();
+        //nextPlayer();
         outputLabel.setText("Player " + currentPlayer + " is on turn");
         rollButton.setVisible(true);
         movablePieces.clear();
 
     }
 
-    public void startMove(Piece movingPiece,int fromField, int nasazeni){
+    public void startMove(Piece movingPiece,int fromField, boolean nasazeni){
         Vector2 vector;
-        int targetPiece = data[fromField+dice].getPieces();
-        int targetField = dice+fromField;
-        if (targetField > 39){targetField = 40;}
-        if(fromField >= 0 && fromField <= 39){ // posunout dal
+
+        if(!nasazeni){ // posunout dal
             //for (int m = 0; m < dice; m++) {//posun o 1 pole ( dostat input, kliknutej piece)
+            int targetField = dice+fromField;
+            int targetPiece = data[targetField].getPieces();
+
+            if (fromField <= goHomeField() && fromField + dice > goHomeField()) {
+                targetField += 4 + 8 * currentPlayer;
+                if(targetField > 47 + 8 * currentPlayer) targetField = fromField;
+            }
+            else if (targetField > 39){
+                targetField -= 40;
+            }
             if (targetPiece != -1) kickPiece(targetPiece);
             movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
             movingPiece.setPosition(data[targetField].getFieldCoordinates());
             data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
             data[fromField].setPieces(-1);//vynuluj starej
+
             //}
         }
         else { // nasadit
+            int targetField = currentPlayer*10;
+            int targetPiece = data[targetField].getPieces();
+
             if (targetPiece != -1) kickPiece(targetPiece);
             movingPiece.setFieldNumber(currentPlayer*10);//funkci na validovani - podle hrace posovat o 10
             movingPiece.setPosition(data[currentPlayer*10].getFieldCoordinates());
@@ -197,19 +210,16 @@ public class PlayState extends State {
         }
     }
 
-    private void finishMove(Piece tempPiece, int fromField) {
-        int targetPiece = data[fromField+dice].getPieces();
-        if(targetPiece == 0) {
-
-
+    private int goHomeField() {
+        int home = 100;
+        switch (currentPlayer){
+            case 0:{ home = 39; break; }
+            case 1:{ home = 9; break; }
+            case 2:{ home = 19; break; }
+            case 3:{ home = 29; break; }
         }
-        else {
-            if(targetPiece == currentPlayer){ // validovat dřív že neskočí na sveho --> v getMovablePiece
-            }
-            else {
+        return home;
 
-            }
-        }
     }
 
     private void kickPiece(int targetPiece){
@@ -222,14 +232,43 @@ public class PlayState extends State {
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
-
+        int pieceField;
         for (int i = 0; i < piece.length; i++) {
-            if(piece[i].getPlayer()==currentPlayer) {// pridat podminku na dice = 1-5
-                if ((piece[i].getFieldNumber() < 40))
-                    movablePieces.add(piece[i].getFieldNumber());
-                else {
+            pieceField = piece[i].getFieldNumber();
+            if(piece[i].getPlayer()==currentPlayer) { // pridat podminku na dice = 1-5
+                if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
+                    int targetPiece = data[pieceField + dice].getPieces();
+                    if(targetPiece == -1) {
+                        movablePieces.add(pieceField);
+                    }else{
+                        if (piece[targetPiece].getPlayer() != currentPlayer){
+                            movablePieces.add(pieceField);
+                        }
+                    }
+                }
+                else if (pieceField < 44 + 8 * currentPlayer && pieceField > 39 + 8 * currentPlayer){
+                    int targetPiece = data[currentPlayer*10].getPieces();
                     if ((dice == 6)) {
-                        movablePieces.add(piece[i].getFieldNumber());
+                        if(targetPiece == -1) {
+                            movablePieces.add(pieceField);
+                        }else{
+                            if(piece[targetPiece].getPlayer() != currentPlayer){
+                                movablePieces.add(pieceField);
+                            }
+                        }
+                    }
+                }
+                else if(pieceField < 40 && (pieceField < goHomeField() && pieceField + dice > goHomeField())){ //piecefield 44-47 + 8*currentPlayer
+                    int targetField = pieceField + dice + 4 + 8 * currentPlayer;
+                    if(pieceField + dice + 4 <= 47 + 8 * currentPlayer) {
+                        int targetPiece = data[targetField].getPieces();
+                        if(targetPiece == -1) {
+                            movablePieces.add(pieceField);
+                        }else{
+                            {
+                                movablePieces.add(pieceField);
+                            }
+                        }
                     }
                 }
             }
@@ -238,7 +277,7 @@ public class PlayState extends State {
     }
 
     private int getTouchedPieces() {
-        touchedPieces = 1;
+        touchedPieces = 0;
         return touchedPieces;
     }
 
@@ -294,8 +333,8 @@ public class PlayState extends State {
     private void nextPlayer(){
         currentPlayer=nextPlayer;
         nextPlayer++;
-        if(nextPlayer > 4)
-            nextPlayer = 1;
+        if(nextPlayer > 3)
+            nextPlayer = 0;
         //outputLabel.setText("Player" + currentPlayer +" is on turn");
     }
 
@@ -319,7 +358,7 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label("Player " + currentPlayer + " is on turn",comicSkin);
+        outputLabel = new Label("Player " + currentPlayer + 1 + " is on turn",comicSkin);
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);

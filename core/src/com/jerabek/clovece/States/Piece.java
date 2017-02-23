@@ -32,7 +32,7 @@ public class Piece {
         pieceId = id;
         velocity = new Vector2(0, 0);
         player = playerId;
-        String[] pieceTexture = new String[]{"panakR.png", "panakY.png", "panakG.png", "panakB.png"};
+        String[] pieceTexture = new String[]{"panakB.png", "panakY.png","panakR.png", "panakG.png"};
         texture = new Texture(pieceTexture[playerId]);
         fieldNumber = FieldNumber;
         startFieldNumber = FieldNumber;
