@@ -120,7 +120,6 @@ public class PlayState extends State {
 
         label();
         rollButton();
-
     }
 
     @Override
@@ -156,16 +155,16 @@ public class PlayState extends State {
 
     private void round(){
         outputLabel.setText("Player " + currentPlayer + " is on turn");
-
+        int nasazeni = 0;
         int dice = throwDice();
         getMovablePieces(currentPlayer, dice);
-        if(!movablePieces.isEmpty())  {
+        if(!movablePieces.isEmpty()) {
             //markTargetFields();//možná cílová pole
             //select piece to move
             int fromField = movablePieces.get(getTouchedPieces());
-            Piece tempPiece = piece[data[fromField].getPieces()];
-            startMove(tempPiece, fromField);
-
+            if (fromField > 39){nasazeni = 1;}
+            Piece movingPiece = piece[data[fromField].getPieces()];
+            startMove(movingPiece, fromField, nasazeni);
             }
 
         nextPlayer();
@@ -175,16 +174,26 @@ public class PlayState extends State {
 
     }
 
-    public void startMove(Piece tempPiece,int field){
+    public void startMove(Piece movingPiece,int fromField, int nasazeni){
         Vector2 vector;
-        if(field >= 0 && field <= 39){ // posunout dal
+        int targetPiece = data[fromField+dice].getPieces();
+        int targetField = dice+fromField;
+        if (targetField > 39){targetField = 40;}
+        if(fromField >= 0 && fromField <= 39){ // posunout dal
             //for (int m = 0; m < dice; m++) {//posun o 1 pole ( dostat input, kliknutej piece)
-                finishMove(tempPiece, field);
+            if (targetPiece != -1) kickPiece(targetPiece);
+            movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
+            movingPiece.setPosition(data[targetField].getFieldCoordinates());
+            data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
+            data[fromField].setPieces(-1);//vynuluj starej
             //}
         }
         else { // nasadit
-
-            finishMove(tempPiece, field);
+            if (targetPiece != -1) kickPiece(targetPiece);
+            movingPiece.setFieldNumber(currentPlayer*10);//funkci na validovani - podle hrace posovat o 10
+            movingPiece.setPosition(data[currentPlayer*10].getFieldCoordinates());
+            data[currentPlayer*10].setPieces(movingPiece.getPieceId());//nastav novej
+            data[fromField].setPieces(-1);//vynuluj starej
         }
     }
 
@@ -192,31 +201,24 @@ public class PlayState extends State {
         int targetPiece = data[fromField+dice].getPieces();
         if(targetPiece == 0) {
 
-            tempPiece.setFieldNumber(dice+fromField);//funkci na validovani - podle hrace posovat o 10
-            tempPiece.setPosition(data[fromField+dice].getFieldCoordinates());
-            data[fromField+dice].setPieces(tempPiece.getPieceId());//nastav novej
-            data[fromField].setPieces(0);//vynuluj starej
+
         }
         else {
             if(targetPiece == currentPlayer){ // validovat dřív že neskočí na sveho --> v getMovablePiece
             }
             else {
 
-                kickPiece(targetPiece);
-
-                tempPiece.setFieldNumber(currentPlayer*10);//funkci na validovani - podle hrace posovat o 10
-                tempPiece.setPosition(data[currentPlayer*10].getFieldCoordinates());
-                data[currentPlayer*10].setPieces(tempPiece.getPieceId());//nastav novej
-                data[fromField].setPieces(0);//vynuluj starej
-
             }
         }
     }
 
-    private void kickPiece(int targetField){
-        int startField = piece[targetField].getStartFieldNumber();
-        piece[targetField].setFieldNumber(startField);
-        piece[targetField].setPosition(data[startField].getFieldCoordinates());
+    private void kickPiece(int targetPiece){
+
+        int startField = piece[targetPiece].getStartFieldNumber();
+        piece[targetPiece].setFieldNumber(startField);
+        piece[targetPiece].setPosition(data[startField].getFieldCoordinates());
+        data[startField].setPieces(targetPiece);
+        data[startField].setPlayer(piece[targetPiece].getPlayer());
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
