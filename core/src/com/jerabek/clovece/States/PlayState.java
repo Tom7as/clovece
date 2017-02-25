@@ -25,6 +25,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Logger;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class PlayState extends State {
     private static final String TEXT = "textstring";
     private static final Color COLOR = Color.BLACK;
     private static final float[] SCALES = {0.25f, 0.5f, 1, 2, 4};
+    private int error;
 
     private static class DistanceFieldShader extends ShaderProgram {
         public DistanceFieldShader () {
@@ -78,11 +80,11 @@ public class PlayState extends State {
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
 
-    private int dice, currentPlayer=0, nextPlayer=1, touchedPieces;
+    private int dice, currentPlayer=0, nextPlayer=1, touchedPieces, roll=0;
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
-
+    private int [] home = new int[4];
 
 
     public PlayState(GameStateManager gsm) {
@@ -138,6 +140,11 @@ public class PlayState extends State {
         //refreshBoard();
         //piece[f].update(dt);
         //piece[f].getPosition().x + 80;
+        if(roll > 30) {
+            roll = 0;
+            round();
+        }
+        roll++;
     }
 
     @Override
@@ -155,9 +162,11 @@ public class PlayState extends State {
     }
 
     private void round(){
-        outputLabel.setText("Player " + currentPlayer + " is on turn");
+        outputLabel.setText("Player " + currentPlayer  + " is on turn");
+
         boolean nasazeni = false;
         int dice = throwDice();
+
         getMovablePieces(currentPlayer, dice);
         if(!movablePieces.isEmpty()) {
             //markTargetFields();//možná cílová pole
@@ -168,11 +177,25 @@ public class PlayState extends State {
             startMove(movingPiece, fromField, nasazeni);
             }
 
-        //nextPlayer();
-        outputLabel.setText("Player " + currentPlayer + " is on turn");
-        rollButton.setVisible(true);
-        movablePieces.clear();
+        if(checkWin()){
+            outputLabel.setText("Player " + currentPlayer + " wins!");
+            rollButton.setVisible(false);
+        }else{
+            outputLabel.setText("Player " + currentPlayer + " is on turn");
+            rollButton.setVisible(true);
+            movablePieces.clear();
+            nextPlayer();
+        }
 
+
+
+    }
+
+    private boolean checkWin() {
+        if(home[currentPlayer]==pieceCount) {
+            return true;
+        }
+        else return false;
     }
 
     public void startMove(Piece movingPiece,int fromField, boolean nasazeni){
@@ -181,16 +204,19 @@ public class PlayState extends State {
         if(!nasazeni){ // posunout dal
             //for (int m = 0; m < dice; m++) {//posun o 1 pole ( dostat input, kliknutej piece)
             int targetField = dice+fromField;
-            int targetPiece = data[targetField].getPieces();
 
-            if (fromField <= goHomeField() && fromField + dice > goHomeField()) {
-                targetField += 4 + 8 * currentPlayer;
-                if(targetField > 47 + 8 * currentPlayer) targetField = fromField;
+
+            if (fromField <= goHomeField() && targetField > goHomeField()) { //do domecku
+                targetField = movingPiece.getFieldNumber() + dice - goHomeField() + 43 + 8 * currentPlayer;
+                home[currentPlayer]++; //win condition +1
             }
-            else if (targetField > 39){
+            else if (targetField > 39){ // pokracuj v kole
                 targetField -= 40;
             }
-            if (targetPiece != -1) kickPiece(targetPiece);
+            int targetPiece = data[targetField].getPieces();
+            if (targetPiece != -1) {
+                kickPiece(targetPiece);
+            }
             movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
             movingPiece.setPosition(data[targetField].getFieldCoordinates());
             data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
@@ -199,13 +225,15 @@ public class PlayState extends State {
             //}
         }
         else { // nasadit
-            int targetField = currentPlayer*10;
-            int targetPiece = data[targetField].getPieces();
+            int targetField = 10+currentPlayer*10;
+            if(targetField==40) targetField = 0;//pro posledniho hrace
 
+            int targetPiece = data[targetField].getPieces();//vyhodit panaka
             if (targetPiece != -1) kickPiece(targetPiece);
-            movingPiece.setFieldNumber(currentPlayer*10);//funkci na validovani - podle hrace posovat o 10
-            movingPiece.setPosition(data[currentPlayer*10].getFieldCoordinates());
-            data[currentPlayer*10].setPieces(movingPiece.getPieceId());//nastav novej
+
+            movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
+            movingPiece.setPosition(data[targetField].getFieldCoordinates());
+            data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
             data[fromField].setPieces(-1);//vynuluj starej
         }
     }
@@ -213,13 +241,12 @@ public class PlayState extends State {
     private int goHomeField() {
         int home = 100;
         switch (currentPlayer){
-            case 0:{ home = 39; break; }
-            case 1:{ home = 9; break; }
-            case 2:{ home = 19; break; }
-            case 3:{ home = 29; break; }
+            case 0:{ home = 9; break; }
+            case 1:{ home = 19; break; }
+            case 2:{ home = 29; break; }
+            case 3:{ home = 39; break; }
         }
         return home;
-
     }
 
     private void kickPiece(int targetPiece){
@@ -228,14 +255,14 @@ public class PlayState extends State {
         piece[targetPiece].setFieldNumber(startField);
         piece[targetPiece].setPosition(data[startField].getFieldCoordinates());
         data[startField].setPieces(targetPiece);
-        data[startField].setPlayer(piece[targetPiece].getPlayer());
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
         int pieceField;
-        for (int i = 0; i < piece.length; i++) {
+        for (int i = currentPlayer * pieceCount; i < currentPlayer * pieceCount + pieceCount; i++) {
             pieceField = piece[i].getFieldNumber();
             if(piece[i].getPlayer()==currentPlayer) { // pridat podminku na dice = 1-5
+                //pro normalni posun po ploše
                 if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
                     int targetPiece = data[pieceField + dice].getPieces();
                     if(targetPiece == -1) {
@@ -246,6 +273,7 @@ public class PlayState extends State {
                         }
                     }
                 }
+                //pro nasazeni nove figurky
                 else if (pieceField < 44 + 8 * currentPlayer && pieceField > 39 + 8 * currentPlayer){
                     int targetPiece = data[currentPlayer*10].getPieces();
                     if ((dice == 6)) {
@@ -258,16 +286,15 @@ public class PlayState extends State {
                         }
                     }
                 }
-                else if(pieceField < 40 && (pieceField < goHomeField() && pieceField + dice > goHomeField())){ //piecefield 44-47 + 8*currentPlayer
-                    int targetField = pieceField + dice + 4 + 8 * currentPlayer;
-                    if(pieceField + dice + 4 <= 47 + 8 * currentPlayer) {
+                //zajeti do domečku
+                else if(pieceField < 40 && pieceField <= goHomeField() && pieceField + dice > goHomeField()){ //piecefield 44-47 + 8*currentPlayer
+
+
+                    if(34 + pieceField + dice <= 47 + 10 * currentPlayer) {
+                        int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
                         int targetPiece = data[targetField].getPieces();
                         if(targetPiece == -1) {
                             movablePieces.add(pieceField);
-                        }else{
-                            {
-                                movablePieces.add(pieceField);
-                            }
                         }
                     }
                 }
@@ -346,8 +373,8 @@ public class PlayState extends State {
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
                 //outputLabel.setText("Player" + nextPlayer +" is on turn");
+                roll = 100;
                 rollButton.setVisible(false);
-                round();
             }
             @Override
             public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
@@ -358,7 +385,7 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label("Player " + currentPlayer + 1 + " is on turn",comicSkin);
+        outputLabel = new Label("Player " +  1 + " is on turn",comicSkin);
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);

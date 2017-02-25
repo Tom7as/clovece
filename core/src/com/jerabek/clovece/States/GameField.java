@@ -12,28 +12,18 @@ public class GameField {
     private int y;
     private int pieces;
     private int color;
-    private int player;
 
     static GameField[] getData() {
         return data;
     }
 
-    private GameField(int sequence, int x, int y, int pieces, int color, int player) {
+    private GameField(int sequence, int x, int y, int pieces, int color) {
         this.field = sequence; //pořadi na desce 0-40,
         this.x = x; //souradnice pole 3-23
         this.y = y; //souradnice pole 3-23
         this.pieces = pieces; //n-tá figurka -> -1,0 - 15
         this.color = color; // 0,1,2,3,4 - r y g b
-        this.player = player; // -1,0,1,2,3
     } //poradi, zhora, zleva, bez figurky -1, bez barvy 0, bez hrace -1
-
-    public int getPlayer() {
-        return player;
-    }
-
-    public void setPlayer(int player) {
-        this.player = player;
-    }
 
     public void setPieces(int pieces) {
         this.pieces = pieces;
@@ -70,82 +60,81 @@ public class GameField {
     }
 
     private static GameField[] data = {
-            new GameField(0, -5, 1, -1, 1, 0),
-            new GameField(1, -4, 1, -1, 0, 0),
-            new GameField(2, -3, 1, -1, 0, 0),
-            new GameField(3, -2, 1, -1, 0, 0),
-            new GameField(4, -1, 1, -1, 0, 0),
-            new GameField(5, -1, 2, -1, 0, 0),
-            new GameField(6, -1, 3, -1, 0, 0),
-            new GameField(7, -1, 4, -1, 0, 0),
-            new GameField(8, -1, 5, -1, 0, 0),
-            new GameField(9,  0, 5, -1, 0, 0),
-            new GameField(10, 1, 5, -1, 2, 0),
-            new GameField(11, 1, 4, -1, 0, 0),
-            new GameField(12, 1, 3, -1, 0, 0),
-            new GameField(13, 1, 2, -1, 0, 0),
-            new GameField(14, 1, 1, -1, 0, 0),
-            new GameField(15, 2, 1, -1, 0, 0),
-            new GameField(16, 3, 1, -1, 0, 0),
-            new GameField(17, 4, 1, -1, 0, 0),
-            new GameField(18, 5, 1, -1, 0, 0),
-            new GameField(19, 5, 0, -1, 0, 0),
-            new GameField(20, 5, -1, -1, 3, 0),
-            new GameField(21, 4, -1, -1, 0, 0),
-            new GameField(22, 3, -1, -1, 0, 0),
-            new GameField(23, 2, -1, -1, 0, 0),
-            new GameField(24, 1, -1, -1, 0, 0),
-            new GameField(25, 1, -2, -1, 0, 0),
-            new GameField(26, 1, -3, -1, 0, 0),
-            new GameField(27, 1, -4, -1, 0, 0),
-            new GameField(28, 1, -5, -1, 0, 0),
-            new GameField(29, 0, -5, -1, 0, 0),
-            new GameField(30, -1, -5, -1, 4, 0),
-            new GameField(31, -1, -4, -1, 0, 0),
-            new GameField(32, -1, -3, -1, 0, 0),
-            new GameField(33, -1, -2, -1, 0, 0),
-            new GameField(34, -1, -1, -1, 0, 0),
-            new GameField(35, -2, -1, -1, 0, 0),
-            new GameField(36, -3, -1, -1, 0, 0),
-            new GameField(37, -4, -1, -1, 0, 0),
-            new GameField(38, -5, -1, -1, 0, 0),
-            new GameField(39, -5,  0, -1, 0, 0),
-
+            new GameField(0, -1, -5, -1, 4),
+            new GameField(1, -1, -4, -1, 0),
+            new GameField(2, -1, -3, -1, 0),
+            new GameField(3, -1, -2, -1, 0),
+            new GameField(4, -1, -1, -1, 0),
+            new GameField(5, -2, -1, -1, 0),
+            new GameField(6, -3, -1, -1, 0),
+            new GameField(7, -4, -1, -1, 0),
+            new GameField(8, -5, -1, -1, 0),
+            new GameField(9, -5,  0, -1, 0),
+            new GameField(10, -5, 1, -1, 1),
+            new GameField(11, -4, 1, -1, 0),
+            new GameField(12, -3, 1, -1, 0),
+            new GameField(13, -2, 1, -1, 0),
+            new GameField(14, -1, 1, -1, 0),
+            new GameField(15, -1, 2, -1, 0),
+            new GameField(16, -1, 3, -1, 0),
+            new GameField(17, -1, 4, -1, 0),
+            new GameField(18, -1, 5, -1, 0),
+            new GameField(19,  0, 5, -1, 0),
+            new GameField(20, 1, 5, -1, 2),
+            new GameField(21, 1, 4, -1, 0),
+            new GameField(22, 1, 3, -1, 0),
+            new GameField(23, 1, 2, -1, 0),
+            new GameField(24, 1, 1, -1, 0),
+            new GameField(25, 2, 1, -1, 0),
+            new GameField(26, 3, 1, -1, 0),
+            new GameField(27, 4, 1, -1, 0),
+            new GameField(28, 5, 1, -1, 0),
+            new GameField(29, 5, 0, -1, 0),
+            new GameField(30, 5, -1, -1, 3),
+            new GameField(31, 4, -1, -1, 0),
+            new GameField(32, 3, -1, -1, 0),
+            new GameField(33, 2, -1, -1, 0),
+            new GameField(34, 1, -1, -1, 0),
+            new GameField(35, 1, -2, -1, 0),
+            new GameField(36, 1, -3, -1, 0),
+            new GameField(37, 1, -4, -1, 0),
+            new GameField(38, 1, -5, -1, 0),
+            new GameField(39, 0, -5, -1, 0),
             //hrač0 start, cil blue
-            new GameField(40, -5, 5, 0, 1, 0),
-            new GameField(41, -5, 4, 0, 1, 0),
-            new GameField(42, -4, 5, 0, 1, 0),
-            new GameField(43, -4, 4, 0, 1, 0),
-            new GameField(44, -4, 0, -1, 1, 0),
-            new GameField(45, -3, 0, -1, 1, 0),
-            new GameField(46, -2, 0, -1, 1, 0),
-            new GameField(47, -1, 0, -1, 1, 0),
+            new GameField(40, -5, 5, 0, 1),
+            new GameField(41, -5, 4, 0, 1),
+            new GameField(42, -4, 5, 0, 1),
+            new GameField(43, -4, 4, 0, 1),
+            new GameField(44, -4, 0, -1, 1),
+            new GameField(45, -3, 0, -1, 1),
+            new GameField(46, -2, 0, -1, 1),
+            new GameField(47, -1, 0, -1, 1),
             //hrač1 start, cil yellow
-            new GameField(48, 4, 5, 0, 2, 1),
-            new GameField(49, 4, 4, 0, 2, 1),
-            new GameField(50, 5, 5, 0, 2, 1),
-            new GameField(51, 5, 4, -1, 2, 1),
-            new GameField(52, 0, 4, -1, 2, 0),
-            new GameField(53, 0, 3, -1, 2, 0),
-            new GameField(54, 0, 2, -1, 2, 0),
-            new GameField(55, 0, 1, -1, 2, 0),
+            new GameField(48, 4, 5, 0, 2),
+            new GameField(49, 4, 4, 0, 2),
+            new GameField(50, 5, 5, 0, 2),
+            new GameField(51, 5, 4, 0, 2),
+            new GameField(52, 0, 4, -1, 2),
+            new GameField(53, 0, 3, -1, 2),
+            new GameField(54, 0, 2, -1, 2),
+            new GameField(55, 0, 1, -1, 2),
             //hrač2 start, cil red
-            new GameField(56, 4, -5, 0, 3, 2),
-            new GameField(57, 4, -4, 0, 3, 2),
-            new GameField(58, 5, -5, 0, 3, 2),
-            new GameField(59, 5, -4, 0, 3, 2),
-            new GameField(60, 4, 0, -1, 3, 0),
-            new GameField(61, 3, 0, -1, 3, 0),
-            new GameField(62, 2, 0, -1, 3, 0),
-            new GameField(63, 1, 0, -1, 3, 0),
+            new GameField(56, 4, -5, 0, 3),
+            new GameField(57, 4, -4, 0, 3),
+            new GameField(58, 5, -5, 0, 3),
+            new GameField(59, 5, -4, 0, 3),
+            new GameField(60, 4, 0, -1, 3),
+            new GameField(61, 3, 0, -1, 3),
+            new GameField(62, 2, 0, -1, 3),
+            new GameField(63, 1, 0, -1, 3),
             //hrač3 start, cil green
-            new GameField(64, -5, -4, 0, 4, 3),
-            new GameField(65, -4, -4, 0, 4, 3),
-            new GameField(66, -5, -5, 0, 4, 3),
-            new GameField(67, -4, -5, 0, 4, 3),
-            new GameField(68, 0, -4, -1, 4, 0),
-            new GameField(69, 0, -3, -1, 4, 0),
-            new GameField(70, 0, -2, -1, 4, 0),
-            new GameField(71, 0, -1, -1, 4, 0),
+            new GameField(64, -5, -4, 0, 4),
+            new GameField(65, -4, -4, 0, 4),
+            new GameField(66, -5, -5, 0, 4),
+            new GameField(67, -4, -5, 0, 4),
+            new GameField(68, 0, -4, -1, 4),
+            new GameField(69, 0, -3, -1, 4),
+            new GameField(70, 0, -2, -1, 4),
+            new GameField(71, 0, -1, -1, 4),
     };
 }
