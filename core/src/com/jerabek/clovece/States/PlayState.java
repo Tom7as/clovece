@@ -84,7 +84,9 @@ public class PlayState extends State {
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
+    private enum playerType {NONE, HUMAN, AI_DUMB, AI_SAFE, AI_EVIL};
     private int [] home = new int[4];
+    boolean gameOver = false, turnOver = true;
 
 
     public PlayState(GameStateManager gsm) {
@@ -140,11 +142,14 @@ public class PlayState extends State {
         //refreshBoard();
         //piece[f].update(dt);
         //piece[f].getPosition().x + 80;
-        if(roll > 30) {
-            roll = 0;
-            round();
+        if(!gameOver) {
+            if (roll > 30 && turnOver) {
+                roll = 0;
+                round();
+            }
+
+            roll++;
         }
-        roll++;
     }
 
     @Override
@@ -193,7 +198,8 @@ public class PlayState extends State {
 
     private boolean checkWin() {
         if(home[currentPlayer]==pieceCount) {
-            return true;
+            gameOver = true;
+            return gameOver;
         }
         else return false;
     }
@@ -385,11 +391,11 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label("Player " +  1 + " is on turn",comicSkin);
+        outputLabel = new Label(getPlayerName() + " player is on turn",comicSkin);
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
-        outputLabel.setFontScale(2,2);
+        outputLabel.setFontScale(1.5f);
         outputLabel.setStyle(labelStyle);
 
         stage.addActor(outputLabel);
@@ -455,4 +461,14 @@ public class PlayState extends State {
     public void saveGame(){
 
     }
+    public String getPlayerName(){
+        switch(currentPlayer){
+            case 0: return "Blue";
+            case 1: return "Yellow";
+            case 2: return "Red";
+            case 3: return "Green";
+            default: return "unknown";
+        }
+    }
+    public enum player {blue, yellow, red, green}
 }
