@@ -1,12 +1,8 @@
 package com.jerabek.clovece.States;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
-import sun.java2d.loops.DrawPath;
 
 /**
  * Created by Tomas on 17.02.2017.
@@ -69,6 +65,7 @@ public class Piece {
     public void setPosition(Vector2 position) {
         this.position = position;
     }
+
     public void setPosition(int x, int y) {
         this.position.set(x,y);
     }

@@ -18,9 +18,9 @@ public class GameField {
     }
 
     private GameField(int sequence, int x, int y, int pieces, int color) {
-        this.field = sequence; //pořadi na desce 0-40,
-        this.x = x; //souradnice pole 3-23
-        this.y = y; //souradnice pole 3-23
+        this.field = sequence; //pořadi na desce 0-39,40-48...
+        this.x = x; //souradnice pole -5 , 5
+        this.y = y; //souradnice pole -5 , 5
         this.pieces = pieces; //n-tá figurka -> -1,0 - 15
         this.color = color; // 0,1,2,3,4 - r y g b
     } //poradi, zhora, zleva, bez figurky -1, bez barvy 0, bez hrace -1
