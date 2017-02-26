@@ -266,11 +266,12 @@ public class PlayState extends State {
                 nextField = nextField + 1;
                 if (fromField == 40){ fromField = 0; }
                 if (nextField == 40){ nextField = 0; }
-                if (nextField > 72){ nextField = 72; }
+                if (nextField > 71){ nextField = 71; }
             }
             else {
                 fromField = nextField;
                 nextField++;
+                if (nextField > 71){ nextField = 71; }
                 goToHomeF=false;
             }
 
@@ -429,7 +430,7 @@ public class PlayState extends State {
     private void nextPlayer(){
         currentPlayer=nextPlayer;
         nextPlayer++;
-        if(nextPlayer > 3)
+        if(nextPlayer > playersCount -1)
             nextPlayer = 0;
         outputLabel.setText(getPlayerName() + " player is on turn");
     }
