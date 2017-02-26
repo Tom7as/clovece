@@ -10,8 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Piece {
     private int fieldNumber, startFieldNumber;
-    private Vector2 position;
-    private Vector2 velocity;
+    private float x, y;
     private Texture texture;
     private int player, pieceId;
 
@@ -23,70 +22,66 @@ public class Piece {
         this.pieceId = pieceId;
     }
 
-    Piece(int x, int id, int y, int playerId, int FieldNumber){
-        position = new Vector2(x, y);
-        pieceId = id;
-        velocity = new Vector2(0, 0);
-        player = playerId;
+
+    Piece(int x, int y, int id, int playerId, int FieldNumber){
+        this.x = x;
+        this.y = y;
+        this.pieceId = id;
+        this.player = playerId;
         String[] pieceTexture = new String[]{"panakB.png", "panakY.png","panakR.png", "panakG.png"};
-        texture = new Texture(pieceTexture[playerId]);
-        fieldNumber = FieldNumber;
-        startFieldNumber = FieldNumber;
+        this.texture = new Texture(pieceTexture[playerId]);
+        this.fieldNumber = FieldNumber;
+        this.startFieldNumber = FieldNumber;
     }
 
-    public int getStartFieldNumber() {
+    int getStartFieldNumber() {
         return startFieldNumber;
     }
 
-    public int getFieldNumber() {
+    int getFieldNumber() {
         return fieldNumber;
     }
 
-    public void setFieldNumber(int fieldNumber) {
+    void setFieldNumber(int fieldNumber) {
         this.fieldNumber = fieldNumber;
     }
 
-    public Texture getTexture() {
+    Texture getTexture() {
         return texture;
     }
 
-    public Vector2 getVelocity() {
-        return velocity;
+
+    public float getX() {
+        return x;
     }
 
-    public void setVelocity(Vector2 velocity) {
-        this.velocity = velocity;
+    public float getY() {
+        return y;
     }
 
-    public Vector2 getPosition() {
-        return position;
+    public void setX(int x) {
+        this.x = x;
     }
 
-    public void setPosition(Vector2 position) {
-        this.position = position;
+    public void setY(int y) {
+        this.y = y;
     }
 
-    public void setPosition(int x, int y) {
-        this.position.set(x,y);
+    public void movePiece(float x, float y){
+        this.x -= x;
+        this.y -= y;
     }
 
-    public int getPlayer() {
+    void setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    int getPlayer() {
         return player;
     }
 
-    public void setPlayer(int player) {
-        this.player = player;
-    }
-
-    public void movePiece(int x, int y){//SpriteBatch sb, int position, Texture texture
-        this.position.x = x;
-        this.position.y = y;
-    }
-
-    void update(float dt){
-    }
-
-    public void dispose(){
+    void dispose(){
         texture.dispose();
 
     }

@@ -79,17 +79,17 @@ public class PlayState extends State {
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
 
-    private int dice, currentPlayer=0, nextPlayer=1, touchedPieces, roll=0, fromField, targetField;
+    private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
     private enum playerType {NONE, HUMAN, AI_DUMB, AI_SAFE, AI_EVIL};
-    private int [] home = new int[4];
-    private boolean gameOver = false, turnOver = true, nasazeni = false, move = false;
+    private int [] home = new int[playersCount];
+    private boolean gameOver = false, turnOver = true, nasazeni = false, move = false, rollPresed = false, goToHomeN = false, goToHomeF = false;
     private Piece movingPiece = null;
-    private int nextField;
-    private float movingProgres, step = 0.1f;
-    private Vector2 position;
+    private int nextField, dice = 0;
+    private float movingProgress, step = 0.1f, moveX, moveY;
+
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
@@ -117,8 +117,8 @@ public class PlayState extends State {
         for(int a=0; a < playersCount; a++){
             for(int b=0; b < pieceCount; b++){
                 piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
-                                         a*4+b,
                                          data[40+a*8+b].getY(),
+                                         a*4+b,
                                          a,
                                          40+a*8+b );
                 data[40+a*8+b].setPieces(a*4+b);
@@ -137,26 +137,35 @@ public class PlayState extends State {
 
     @Override
     public void update(float dt) {
+        checkWin();
         if(!gameOver) {
-            if (roll > 30 && turnOver) {
 
-                turnOver = false;
-                roll = 0;
-                round();//hodit kostkou
+            if (/* framePerThrow > 30 && */ turnOver ) {
 
-                checkWin();
+                    rollPresed = false;
+                    turnOver = false;
+                    //framePerThrow = 0;
+                    dice = throwDice();
+                    round();//hodit kostkou
+
 
             }
-            roll++;
-            if(!turnOver){
+            //framePerThrow++;
+            else {
                 if(move){startMove();}
                 else {
-                    nasazeni = false;
-                    nextPlayer();
                     turnOver = true;
+
+                    nextPlayer();
+                    rollButton.setVisible(true);
+
                 }
             }
+
         }
+//        else {
+//        showRestartButton...
+//        }
     }
 
     @Override
@@ -174,15 +183,16 @@ public class PlayState extends State {
     }
 
     private void round(){
-        outputLabel.setText(getPlayerName() + " player is on turn");
-        int dice = throwDice();
+        //outputLabel.setText(getPlayerName() + " player is on turn");
+
         getMovablePieces(currentPlayer, dice);
         if(!movablePieces.isEmpty()) {
             //markTargetFields();
             fromField = movablePieces.get(getTouchedPieces());
-            if (fromField > 39){nasazeni = true;}
+            movablePieces.clear();
+            if (fromField > 39) nasazeni = true; else nasazeni = false;
             movingPiece = piece[data[fromField].getPieces()];
-            setMove(movingPiece, fromField, nasazeni);
+            setMove();
         }
     }
 
@@ -196,37 +206,38 @@ public class PlayState extends State {
     private void checkWin() {
         if(home[currentPlayer]==pieceCount){
             gameOver = true;
-            outputLabel.setText("Player " + currentPlayer + " wins!");
-            rollButton.setVisible(false);
-        }else{
-            outputLabel.setText("Player " + currentPlayer + " is on turn");
-            rollButton.setVisible(true);
-            movablePieces.clear();
-            //nextPlayer();
+            outputLabel.setText(getPlayerName() + " player wins!");
         }
     }
 
-    public void setMove(Piece movingPiece,int fromField, boolean nasazeni){
+    public void setMove(){
         Vector2 vector;
 
         if(!nasazeni){ // posunout dal
-            //for (int m = 0; m < dice; m++) {//posun o 1 pole ( dostat input, kliknutej piece)
-            int targetField = dice+fromField;
+            targetField = dice+fromField;
+
             if (fromField <= goHomeField() && targetField > goHomeField()) { //do domecku
                 targetField = movingPiece.getFieldNumber() + dice - goHomeField() + 43 + 8 * currentPlayer;
                 home[currentPlayer]++; //win condition +1
+                goToHomeN = true;
             }
             else if (targetField > 39){ // pokracuj v kole
                 targetField -= 40;
             }
+
             int targetPiece = data[targetField].getPieces();
             if (targetPiece != -1) {
                 kickPiece(targetPiece);
             }
-
+            movingPiece.setFieldNumber(targetField);
             data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
             data[fromField].setPieces(-1);//vynuluj starej
             move=true;
+            movingProgress = 1;
+            nextField = fromField;
+            fromField -= 1;
+            if (fromField < 0){ fromField = 39; }
+
         }
         else { // nasadit
             int targetField = 10+currentPlayer*10;
@@ -236,31 +247,62 @@ public class PlayState extends State {
             if (targetPiece != -1) kickPiece(targetPiece);
 
             movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
-            movingPiece.setPosition(data[targetField].getFieldCoordinates());
+            movingPiece.setPosition(data[targetField].getX(), data[targetField].getY());
             data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
             data[fromField].setPieces(-1);//vynuluj starej
-            turnOver = true;
+//            nasazeni = false;
+
         }
     }
 
     private void startMove() {
 
-        if(movingProgres%1==0) {
-            nextField = movingPiece.getFieldNumber() + 1;
+        if(movingProgress >= 1) {
             dice--;
-            if (nextField > 39){ nextField -= 40; }
-            position = movingPiece.getPosition();
-            position.sub(data[nextField].getFieldCoordinates());
-        }
-        else {
-            if(dice >= 0){
-                position.sub(data[nextField].getFieldCoordinates());
-                movingPiece.setPosition(position.scl(step));
-            }else{
-                turnOver = true;
+            movingProgress = 0;
+
+            if(!goToHomeF){
+                fromField++;
+                nextField = nextField + 1;
+                if (fromField == 40){ fromField = 0; }
+                if (nextField == 40){ nextField = 0; }
+                if (nextField > 72){ nextField = 72; }
             }
+            else {
+                fromField = nextField;
+                nextField++;
+                goToHomeF=false;
+            }
+
+
+            if (goToHomeN) { //do domecku pro cilove pole
+                if(fromField == goHomeField()){
+                    nextField = 44 + 8 * currentPlayer;
+                    goToHomeN = false;
+                    goToHomeF = true;
+                }
+            }
+//            if (goToHomeF) { //do domecku pro odchozi pole
+//                    nextField = fromField+1;
+//                    goToHomeF = false;
+//            }
+
+
+            moveX = data[fromField].getX();
+            moveY = data[fromField].getY();
+            moveX -= data[nextField].getX();
+            moveY -= data[nextField].getY();
+            moveX *= step;
+            moveY *= step;
         }
-        movingProgres += step;
+
+            if(dice >= 0){
+                movingPiece.movePiece(moveX, moveY);
+            }else{
+                move = false; //pohyb dokončen
+            }
+
+        movingProgress += step;
     }
 
     private int goHomeField() {
@@ -278,7 +320,7 @@ public class PlayState extends State {
 
         int startField = piece[targetPiece].getStartFieldNumber();
         piece[targetPiece].setFieldNumber(startField);
-        piece[targetPiece].setPosition(data[startField].getFieldCoordinates());
+        piece[targetPiece].setPosition(data[startField].getX(), data[startField].getY());
         data[startField].setPieces(targetPiece);
     }
 
@@ -341,7 +383,7 @@ public class PlayState extends State {
         {
             for (int j = 0; j<pieceSort.length; j++)
             {
-                if (pieceSort[i].getPosition().y > pieceSort[j].getPosition().y)
+                if (pieceSort[i].getY() > pieceSort[j].getY())
                 {
                     Piece temp = pieceSort[i];
                     pieceSort[i] = pieceSort[j];
@@ -352,8 +394,8 @@ public class PlayState extends State {
 
         for(Piece pieces : pieceSort)
             sb.draw(pieces.getTexture(),
-                    cam.position.x + pieces.getPosition().x * zoom - pieceSize * 0.5f,
-                    cam.position.y + pieces.getPosition().y * zoom - pieceSize * 0.4f);
+                    cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
+                    cam.position.y + pieces.getY() * zoom - pieceSize * 0.5f);
     }
 
     private void refreshBoard(SpriteBatch sb) {
@@ -379,7 +421,9 @@ public class PlayState extends State {
     private int throwDice(){
         dice = random(1,6);
         outputLabel.setText("Player " + currentPlayer + " threw " + dice);
+        rollButton.setVisible(false);
         return dice;
+
     }
 
     private void nextPlayer(){
@@ -387,7 +431,7 @@ public class PlayState extends State {
         nextPlayer++;
         if(nextPlayer > 3)
             nextPlayer = 0;
-        //outputLabel.setText("Player" + currentPlayer +" is on turn");
+        outputLabel.setText(getPlayerName() + " player is on turn");
     }
 
     public void rollButton(){
@@ -398,7 +442,8 @@ public class PlayState extends State {
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
                 //outputLabel.setText("Player" + nextPlayer +" is on turn");
-                roll = 100;
+                framePerThrow = 100;
+                rollPresed = true;
                 rollButton.setVisible(false);
             }
             @Override
