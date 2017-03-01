@@ -34,6 +34,8 @@ public class Piece {
         this.startFieldNumber = FieldNumber;
     }
 
+
+
     int getStartFieldNumber() {
         return startFieldNumber;
     }

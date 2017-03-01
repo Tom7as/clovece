@@ -10,27 +10,27 @@ public class GameField {
     private int field;
     private int x;
     private int y;
-    private int pieces;
+    private int pieceID;
     private int color;
 
     static GameField[] getData() {
         return data;
     }
 
-    private GameField(int sequence, int x, int y, int pieces, int color) {
+    private GameField(int sequence, int x, int y, int pieceID, int color) {
         this.field = sequence; //pořadi na desce 0-39,40-48...
         this.x = x; //souradnice pole -5 , 5
         this.y = y; //souradnice pole -5 , 5
-        this.pieces = pieces; //n-tá figurka -> -1,0 - 15
+        this.pieceID = pieceID; //n-tá figurka -> -1,0 - 15
         this.color = color; // 0,1,2,3,4 - r y g b
     } //poradi, zhora, zleva, bez figurky -1, bez barvy 0, bez hrace -1
 
-    public void setPieces(int pieces) {
-        this.pieces = pieces;
+    public void setPieceID(int pieceID) {
+        this.pieceID = pieceID;
     }
 
-    public int getPieces() {
-        return pieces;
+    public int getPieceID() {
+        return pieceID;
     }
 
     public Vector2 presun(int pozice,int kostka){

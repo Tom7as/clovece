@@ -30,6 +30,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import static com.badlogic.gdx.math.MathUtils.random;
+import static com.badlogic.gdx.math.MathUtils.round;
 import static com.jerabek.clovece.CloveceNezlobSe.*;
 
 /**
@@ -79,23 +80,25 @@ public class PlayState extends State {
 
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
-    private int [] stats = new int[playersCount];
+    private Player[] player = new Player[playersCount];
     private Label[][] statsLabels = new Label[playersCount][2];
-    private float [] round = new float[playersCount];
 
-    DecimalFormat df = new DecimalFormat("#.##");
+    DecimalFormat df2 = new DecimalFormat("#.##");
+    DecimalFormat df0 = new DecimalFormat("#");
 
     private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
+
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
     private enum playerType {NONE, HUMAN, AI_DUMB, AI_SAFE, AI_EVIL};
     private int [] home = new int[playersCount];
-    private boolean gameOver = false, turnOver = true, nasazeni = false, move = false, rollPresed = false, goToHomeN = false, goToHomeF = false;
+    private boolean rollAgain = false, gameOver = false, turnOver = true, nasazeni = false, move = false, rollBtnPressed = false, goToHomeN = false, goToHomeF = false;
     private Piece movingPiece = null;
-    private int nextField, dice = 0, touchx, touchy;
-    private float movingProgress, step = 0.1f, moveX, moveY;
+    private int nextField, dice = 0;
+    private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy;
     private Texture deska = new Texture("deskaq.png");
+    boolean playerSelectedPiece = false, diceRolled = false;
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
@@ -105,7 +108,6 @@ public class PlayState extends State {
         Gdx.input.setInputProcessor(stage);
 
         Texture dice = new Texture("dice.png");
-
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
         distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
@@ -121,66 +123,119 @@ public class PlayState extends State {
         fieldImg[3] = new Texture("poleR.png");
         fieldImg[4] = new Texture("poleG.png");
 
+        //nastav kameny
         for(int a=0; a < playersCount; a++){
-            stats[a] = 0;
-            round[a] = 0;
             for(int b=0; b < pieceCount; b++){
                 piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
                                          data[40+a*8+b].getY(),
                                          a*4+b,
                                          a,
                                          40+a*8+b );
-                data[40+a*8+b].setPieces(a*4+b);
+                data[40+a*8+b].setPieceID(a*4+b);
             }
         }
+
+        //nastav hráče
+        //for(int a=0; a < playersCount; a++){
+            player[0] = new Player("Player", 0, 0, 0);
+            player[1] = new Player("Yellow AI", 1, 0, 0);
+            player[2] = new Player("Red AI", 1, 0, 0);
+            player[3] = new Player("Green AI", 1, 0, 0);
+        //}
+
 
         label();
         rollButton();
         statsLabels();
     }
 
+    public void getPieceByXY(float x, float y){
+        for(int a = 0; a < movablePieces.size(); a++){
+            if(piece[movablePieces.get(a)].getX()==x && piece[movablePieces.get(a)].getY()==y){
+                fromField = piece[movablePieces.get(a)].getFieldNumber();
+                playerSelectedPiece = true;
+            }
+        }
+    }
+
     @Override
     public void handleInput() {
-//        if(Gdx.input.justTouched()){
-//        }
+        if(Gdx.input.justTouched()){
+            touchx = Gdx.input.getX() - cam.viewportWidth / 2;
+            touchy = cam.viewportHeight / 2 - Gdx.input.getY();
+
+            touchx = round(touchx / zoom );
+            touchy = round(touchy / zoom );
+
+            statsLabels[0][0].setText("x: " + touchx);
+            statsLabels[0][1].setText("y: " + touchy);
+        }
     }
 
     @Override
     public void update(float dt) {
         checkWin();
-        touchx = Gdx.input.getX();
-        touchy = Gdx.input.getY();
-        if (home[currentPlayer]==3) {
-            int xyz;
-        }
-
         if(!gameOver) {
+            if ( framePerThrow > 5 || player[currentPlayer].getAi()==0 ) {
+                if ( turnOver ) {
 
-            if (/* framePerThrow > 30 && */ turnOver ) {
+                    if(!diceRolled) {
+                        if(player[currentPlayer].getAi()==0){
+                            dice = throwDice();
+                            getMovablePieces(currentPlayer, dice);
 
-                    rollPresed = false;
-                    turnOver = false;
-                    //framePerThrow = 0;
-                    dice = throwDice();
-                    round();//hodit kostkou
+                        } else {
+                            dice = throwDice();
+                            getMovablePieces(currentPlayer, dice);
 
+                        }
+                    }
+                    if(!movablePieces.isEmpty()) { // pokud je dostupna figurka pro pohyb
+                        if(!playerSelectedPiece) { // a hrač žadnou nevybral
+                            if(player[currentPlayer].getAi() == 0){
+                                handleInput();
+                                getPieceByXY(touchx, touchy);
+                            }else{
+                                callAi(player[currentPlayer].getAi());
+                            }
 
-            }
-            //framePerThrow++;
-            else {
-                if(move){startMove();}
-                else {
-                    turnOver = true;
-                    nextPlayer();
-                    rollButton.setVisible(true);
-
+                        }
+                        if(playerSelectedPiece){
+                            setMove();//hodit kostkou
+                            turnOver = false;
+                        }
+                    } else turnOver = false;
+                } else {
+                    if(move){startMove();}
+                    else {
+                        if(!rollAgain) nextPlayer();
+                        rollBtnPressed = false;
+                        diceRolled = false;
+                        turnOver = true;
+                        playerSelectedPiece = false;
+                        rollButton.setVisible(true);
+                        rollAgain = false;
+                        framePerThrow = 0;
+                    }
                 }
-            }
 
+            }framePerThrow++;
+    //        else {
+    //        showRestartButton...
+//          }
         }
-//        else {
-//        showRestartButton...
-//        }
+    }
+
+
+    private void callAi(int ai) {
+        switch(ai){
+            case 1:
+                fromField = piece[movablePieces.get(0)].getFieldNumber();
+                playerSelectedPiece = true;
+                break;
+            case 2: break;
+            case 3: break;
+        }
     }
 
     @Override
@@ -209,22 +264,19 @@ public class PlayState extends State {
         stage.draw();
     }
 
-    private void round(){
-        //outputLabel.setText(getPlayerName() + " player is on turn");
-
-        getMovablePieces(currentPlayer, dice);
-        if(!movablePieces.isEmpty()) {
+    private void setMove(){
             //markTargetFields();
-            fromField = movablePieces.get(getTouchedPieces());
             movablePieces.clear();
             if (fromField > 39) nasazeni = true; else nasazeni = false;
-            movingPiece = piece[data[fromField].getPieces()];
-            setMove();
-            round[currentPlayer]++;
-            stats[currentPlayer] += dice;
-            statsLabels[currentPlayer][0].setText("avg: " + df.format(stats[currentPlayer] / round[currentPlayer]));
-            statsLabels[currentPlayer][1].setText("sum: " + stats[currentPlayer]);
-        }
+            movingPiece = piece[data[fromField].getPieceID()];
+            setMoveTarget();
+            player[currentPlayer].setRound(player[currentPlayer].getRound()+1);
+            //round[currentPlayer]++;
+            player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
+            //stats[currentPlayer] += dice;
+            statsLabels[currentPlayer][0].setText("avg: " + df2.format(player[currentPlayer].getSum() / player[currentPlayer].getRound()));
+            statsLabels[currentPlayer][1].setText("sum: " + player[currentPlayer].getSum());
+
     }
 
     private void markTargetFields() {
@@ -237,11 +289,11 @@ public class PlayState extends State {
     private void checkWin() {
         if(home[currentPlayer]==pieceCount && !move){
             gameOver = true;
-            outputLabel.setText(getPlayerName() + " player wins!");
+            outputLabel.setText(player[currentPlayer].getName() + " player wins!");
         }
     }
 
-    public void setMove(){
+    public void setMoveTarget(){
         Vector2 vector;
 
         if(!nasazeni){ // posunout dal
@@ -256,13 +308,13 @@ public class PlayState extends State {
                 targetField -= 40;
             }
 
-            int targetPiece = data[targetField].getPieces();
+            int targetPiece = data[targetField].getPieceID();
             if (targetPiece != -1) {
                 kickPiece(targetPiece);
             }
             movingPiece.setFieldNumber(targetField);
-            data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
-            data[fromField].setPieces(-1);//vynuluj starej
+            data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
+            data[fromField].setPieceID(-1);//vynuluj starej
             move=true;
             movingProgress = 1;
             nextField = fromField;
@@ -274,13 +326,13 @@ public class PlayState extends State {
             int targetField = 10+currentPlayer*10;
             if(targetField==40) targetField = 0;//pro posledniho hrace
 
-            int targetPiece = data[targetField].getPieces();//vyhodit panaka
+            int targetPiece = data[targetField].getPieceID();//vyhodit panaka
             if (targetPiece != -1) kickPiece(targetPiece);
 
             movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
             movingPiece.setPosition(data[targetField].getX(), data[targetField].getY());
-            data[targetField].setPieces(movingPiece.getPieceId());//nastav novej
-            data[fromField].setPieces(-1);//vynuluj starej
+            data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
+            data[fromField].setPieceID(-1);//vynuluj starej
 //            nasazeni = false;
 
         }
@@ -288,7 +340,7 @@ public class PlayState extends State {
 
     private void startMove() {
 
-        if(movingProgress >= 1) {
+        if(movingProgress == 1) {
             dice--;
             movingProgress = 0;
 
@@ -347,34 +399,34 @@ public class PlayState extends State {
         int startField = piece[targetPiece].getStartFieldNumber();
         piece[targetPiece].setFieldNumber(startField);
         piece[targetPiece].setPosition(data[startField].getX(), data[startField].getY());
-        data[startField].setPieces(targetPiece);
+        data[startField].setPieceID(targetPiece);
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
         int pieceField;
         for (int i = currentPlayer * pieceCount; i < currentPlayer * pieceCount + pieceCount; i++) {
             pieceField = piece[i].getFieldNumber();
-            if(piece[i].getPlayer()==currentPlayer) { // pridat podminku na dice = 1-5
+            if(piece[i].getPlayer()==currentPlayer) { // vymazat
                 //pro normalni posun po ploše
                 if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
-                    int targetPiece = data[pieceField + dice].getPieces();
+                    int targetPiece = data[pieceField + dice].getPieceID();
                     if(targetPiece == -1) {
-                        movablePieces.add(pieceField);
+                        movablePieces.add(piece[i].getPieceId());
                     }else{
                         if (piece[targetPiece].getPlayer() != currentPlayer){
-                            movablePieces.add(pieceField);
+                            movablePieces.add(piece[i].getPieceId());
                         }
                     }
                 }
                 //pro nasazeni nove figurky
                 else if (pieceField < 44 + 8 * currentPlayer && pieceField > 39 + 8 * currentPlayer){
-                    int targetPiece = data[currentPlayer*10].getPieces();
+                    int targetPiece = data[currentPlayer*10].getPieceID();
                     if ((dice == 6)) {
                         if(targetPiece == -1) {
-                            movablePieces.add(pieceField);
+                            movablePieces.add(piece[i].getPieceId());
                         }else{
                             if(piece[targetPiece].getPlayer() != currentPlayer){
-                                movablePieces.add(pieceField);
+                                movablePieces.add(piece[i].getPieceId());
                             }
                         }
                     }
@@ -385,20 +437,15 @@ public class PlayState extends State {
 
                     if(34 + pieceField + dice <= 47 + 10 * currentPlayer) {
                         int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
-                        int targetPiece = data[targetField].getPieces();
+                        int targetPiece = data[targetField].getPieceID();
                         if(targetPiece == -1) {
-                            movablePieces.add(pieceField);
+                            movablePieces.add(piece[i].getPieceId());
                         }
                     }
                 }
             }
         }
         return movablePieces;
-    }
-
-    private int getTouchedPieces() {
-        touchedPieces = 0;
-        return touchedPieces;
     }
 
     private void paintPieces(SpriteBatch sb){
@@ -446,8 +493,10 @@ public class PlayState extends State {
 
     private int throwDice(){
         dice = random(1,6);
-        outputLabel.setText("Player " + currentPlayer + " threw " + dice);
+        if(dice==6) rollAgain = true;
+        outputLabel.setText(player[currentPlayer].getName() + " threw " + dice);
         rollButton.setVisible(false);
+        diceRolled = true;
         return dice;
 
     }
@@ -457,7 +506,7 @@ public class PlayState extends State {
         nextPlayer++;
         if(nextPlayer > playersCount -1)
             nextPlayer = 0;
-        outputLabel.setText(getPlayerName() + " player is on turn");
+        outputLabel.setText(player[currentPlayer].getName() + " is on turn");
     }
 
     public void rollButton(){
@@ -468,8 +517,7 @@ public class PlayState extends State {
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
                 //outputLabel.setText("Player" + nextPlayer +" is on turn");
-                framePerThrow = 100;
-                rollPresed = true;
+                rollBtnPressed = true;
                 rollButton.setVisible(false);
             }
             @Override
@@ -481,7 +529,7 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label(getPlayerName() + " player is on turn",comicSkin);
+        outputLabel = new Label(player[currentPlayer].getName() + " is on turn",comicSkin);
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
@@ -604,16 +652,6 @@ public class PlayState extends State {
     //// TODO: 22.02.2017 SAVEGAME
     public void saveGame(){
 
-    }
-
-    public String getPlayerName(){
-        switch(currentPlayer){
-            case 0: return "Blue";
-            case 1: return "Yellow";
-            case 2: return "Red";
-            case 3: return "Green";
-            default: return "unknown";
-        }
     }
 
     public enum player {blue, yellow, red, green}
