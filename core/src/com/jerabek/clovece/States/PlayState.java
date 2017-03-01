@@ -25,6 +25,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.jerabek.clovece.CloveceNezlobSe;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -84,7 +85,6 @@ public class PlayState extends State {
     private Label[][] statsLabels = new Label[playersCount][2];
 
     DecimalFormat df2 = new DecimalFormat("#.##");
-    DecimalFormat df0 = new DecimalFormat("#");
 
     private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
 
@@ -96,17 +96,21 @@ public class PlayState extends State {
     private boolean rollAgain = false, gameOver = false, turnOver = true, nasazeni = false, move = false, rollBtnPressed = false, goToHomeN = false, goToHomeF = false;
     private Piece movingPiece = null;
     private int nextField, dice = 0;
-    private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy;
+    private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
     private Texture deska = new Texture("deskaq.png");
     boolean playerSelectedPiece = false, diceRolled = false;
+
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.77f, cam));
+        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.66f, cam));
 
         Gdx.input.setInputProcessor(stage);
 
+        pixelWidth = Gdx.graphics.getWidth() / 1080f;
+        pixelHeight = Gdx.graphics.getHeight() / 1794f;
+        if(pixelHeight < 1.2) pixelHeight+=0.05f;
         Texture dice = new Texture("dice.png");
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
@@ -147,6 +151,9 @@ public class PlayState extends State {
         label();
         rollButton();
         statsLabels();
+
+        statsLabels[2][0].setText("y: " + pixelHeight);
+        statsLabels[2][1].setText("x: " + pixelWidth);
     }
 
     public void getPieceByXY(float x, float y){
@@ -161,8 +168,8 @@ public class PlayState extends State {
     @Override
     public void handleInput() {
         if(Gdx.input.justTouched()){
-            touchx = Gdx.input.getX() - cam.viewportWidth / 2;
-            touchy = cam.viewportHeight / 2 - Gdx.input.getY();
+            touchx = ((Gdx.input.getX() / pixelWidth) - 540) ;
+            touchy = (897 - (Gdx.input.getY() / pixelHeight));
 
             touchx = round(touchx / zoom );
             touchy = round(touchy / zoom );
@@ -213,7 +220,7 @@ public class PlayState extends State {
                         diceRolled = false;
                         turnOver = true;
                         playerSelectedPiece = false;
-                        rollButton.setVisible(true);
+                        rollButton.setVisible(false);
                         rollAgain = false;
                         framePerThrow = 0;
                     }
