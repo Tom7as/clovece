@@ -10,8 +10,8 @@ import com.jerabek.clovece.States.PlayState;
 
 public class CloveceNezlobSe extends ApplicationAdapter {
 
-	public static final float appWidth = 1000;
-	public static final float appHeight = 1000;
+	public static final float appWidth = 1080;
+	public static final float appHeight = 1080;
 
 	public static final String TITLE = "Clovece nezlob se";
 	private GameStateManager gsm;

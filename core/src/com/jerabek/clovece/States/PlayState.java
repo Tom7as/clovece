@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
@@ -27,9 +26,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import static com.badlogic.gdx.math.MathUtils.random;
+import static com.jerabek.clovece.CloveceNezlobSe.*;
 
 /**
  * Created by Tomas on 2/11/2017.
@@ -39,7 +40,7 @@ public class PlayState extends State {
     //renderovani textu
     private static final String TEXT = "textstring";
     private static final Color COLOR = Color.BLACK;
-    private static final float[] SCALES = {0.25f, 0.5f, 1, 2, 4};
+
     private int error;
 
     private static class DistanceFieldShader extends ShaderProgram {
@@ -69,8 +70,8 @@ public class PlayState extends State {
     private LabelStyle labelStyle;
     private Label outputLabel;
 
-    private int zoom = 70;
-    private float fieldSize = 80, smallFieldSize = fieldSize*0.8f, pieceSize = 43;
+    private int zoom = 90;
+    private float fieldSize = 94, smallFieldSize = fieldSize*0.85f, pieceSize = 61;
 
     private GameField[] data = GameField.getData();
 
@@ -78,6 +79,11 @@ public class PlayState extends State {
 
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
+    private int [] stats = new int[playersCount];
+    private Label[][] statsLabels = new Label[playersCount][2];
+    private float [] round = new float[playersCount];
+
+    DecimalFormat df = new DecimalFormat("#.##");
 
     private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
 
@@ -87,18 +93,19 @@ public class PlayState extends State {
     private int [] home = new int[playersCount];
     private boolean gameOver = false, turnOver = true, nasazeni = false, move = false, rollPresed = false, goToHomeN = false, goToHomeF = false;
     private Piece movingPiece = null;
-    private int nextField, dice = 0;
+    private int nextField, dice = 0, touchx, touchy;
     private float movingProgress, step = 0.1f, moveX, moveY;
-
+    private Texture deska = new Texture("deskaq.png");
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(850,850*1.33f,850,850*1.77f, cam));
+        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.77f, cam));
 
         Gdx.input.setInputProcessor(stage);
 
         Texture dice = new Texture("dice.png");
+
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
         distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
@@ -107,14 +114,16 @@ public class PlayState extends State {
         distanceFieldShader = new DistanceFieldShader();
         labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
 
+
         fieldImg[0] = new Texture("pole.png");
         fieldImg[1] = new Texture("poleB.png");
         fieldImg[2] = new Texture("poleY.png");
         fieldImg[3] = new Texture("poleR.png");
         fieldImg[4] = new Texture("poleG.png");
 
-
         for(int a=0; a < playersCount; a++){
+            stats[a] = 0;
+            round[a] = 0;
             for(int b=0; b < pieceCount; b++){
                 piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
                                          data[40+a*8+b].getY(),
@@ -127,6 +136,7 @@ public class PlayState extends State {
 
         label();
         rollButton();
+        statsLabels();
     }
 
     @Override
@@ -138,6 +148,12 @@ public class PlayState extends State {
     @Override
     public void update(float dt) {
         checkWin();
+        touchx = Gdx.input.getX();
+        touchy = Gdx.input.getY();
+        if (home[currentPlayer]==3) {
+            int xyz;
+        }
+
         if(!gameOver) {
 
             if (/* framePerThrow > 30 && */ turnOver ) {
@@ -155,7 +171,6 @@ public class PlayState extends State {
                 if(move){startMove();}
                 else {
                     turnOver = true;
-
                     nextPlayer();
                     rollButton.setVisible(true);
 
@@ -172,6 +187,18 @@ public class PlayState extends State {
     public void render(SpriteBatch sb) {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
+
+        sb.draw(deska, cam.position.x, cam.position.y - deska.getHeight(),
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
+        sb.draw(deska, cam.position.x, cam.position.y,
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
+        sb.draw(deska, cam.position.x - deska.getWidth(), cam.position.y - deska.getHeight(),
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
+        sb.draw(deska, cam.position.x - deska.getWidth() , cam.position.y,
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
+
+
+
         refreshBoard(sb);
         paintPieces(sb);
         //int x = 10;
@@ -193,6 +220,10 @@ public class PlayState extends State {
             if (fromField > 39) nasazeni = true; else nasazeni = false;
             movingPiece = piece[data[fromField].getPieces()];
             setMove();
+            round[currentPlayer]++;
+            stats[currentPlayer] += dice;
+            statsLabels[currentPlayer][0].setText("avg: " + df.format(stats[currentPlayer] / round[currentPlayer]));
+            statsLabels[currentPlayer][1].setText("sum: " + stats[currentPlayer]);
         }
     }
 
@@ -204,7 +235,7 @@ public class PlayState extends State {
     }
 
     private void checkWin() {
-        if(home[currentPlayer]==pieceCount){
+        if(home[currentPlayer]==pieceCount && !move){
             gameOver = true;
             outputLabel.setText(getPlayerName() + " player wins!");
         }
@@ -275,7 +306,6 @@ public class PlayState extends State {
                 goToHomeF=false;
             }
 
-
             if (goToHomeN) { //do domecku pro cilove pole
                 if(fromField == goHomeField()){
                     nextField = 44 + 8 * currentPlayer;
@@ -283,11 +313,6 @@ public class PlayState extends State {
                     goToHomeF = true;
                 }
             }
-//            if (goToHomeF) { //do domecku pro odchozi pole
-//                    nextField = fromField+1;
-//                    goToHomeF = false;
-//            }
-
 
             moveX = data[fromField].getX();
             moveY = data[fromField].getY();
@@ -297,11 +322,11 @@ public class PlayState extends State {
             moveY *= step;
         }
 
-            if(dice >= 0){
-                movingPiece.movePiece(moveX, moveY);
-            }else{
-                move = false; //pohyb dokončen
-            }
+        if(dice >= 0){
+            movingPiece.movePiece(moveX, moveY);
+        }else{
+            move = false; //pohyb dokončen
+        }
 
         movingProgress += step;
     }
@@ -396,7 +421,7 @@ public class PlayState extends State {
         for(Piece pieces : pieceSort)
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
-                    cam.position.y + pieces.getY() * zoom - pieceSize * 0.5f);
+                    cam.position.y + pieces.getY() * zoom - pieceSize * 0.4f);
     }
 
     private void refreshBoard(SpriteBatch sb) {
@@ -436,8 +461,8 @@ public class PlayState extends State {
     }
 
     public void rollButton(){
-        rollButton.setSize(500,110);
-        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - rollButton.getHeight() * 0.35f - 7 * zoom );
+        rollButton.setSize(500,150);
+        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 9 * zoom );
         rollButton.getLabel().setFontScale(2,2);
         rollButton.addListener(new InputListener(){
             @Override
@@ -466,6 +491,60 @@ public class PlayState extends State {
         stage.addActor(outputLabel);
     }
 
+    public void statsLabels(){
+        int labelWidth = 80, labelHeight = 40;
+        float fontSize = 0.85f;
+
+        statsLabels[0][0] = new Label("avg: ",labelStyle);
+        statsLabels[0][0].setSize(labelWidth,labelHeight);
+        statsLabels[0][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[0][0].setFontScale(fontSize);
+        stage.addActor(statsLabels[0][0]);
+
+        statsLabels[0][1] = new Label("sum: ",labelStyle);
+        statsLabels[0][1].setSize(labelWidth,labelHeight);
+        statsLabels[0][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (4) - 30);
+        statsLabels[0][1].setFontScale(fontSize);
+        stage.addActor(statsLabels[0][1]);
+
+        statsLabels[1][0] = new Label("avg: ",labelStyle);
+        statsLabels[1][0].setSize(labelWidth,labelHeight);
+        statsLabels[1][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[1][0].setFontScale(fontSize);
+        stage.addActor(statsLabels[1][0]);
+
+        statsLabels[1][1] = new Label("sum: ",labelStyle);
+        statsLabels[1][1].setSize(labelWidth,labelHeight);
+        statsLabels[1][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (4) - 30);
+        statsLabels[1][1].setFontScale(fontSize);
+        stage.addActor(statsLabels[1][1]);
+
+        statsLabels[2][0] = new Label("avg: ",labelStyle);
+        statsLabels[2][0].setSize(labelWidth,labelHeight);
+        statsLabels[2][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-4) - 30);
+        statsLabels[2][0].setFontScale(fontSize);
+        stage.addActor(statsLabels[2][0]);
+
+        statsLabels[2][1] = new Label("sum: ",labelStyle);
+        statsLabels[2][1].setSize(labelWidth,labelHeight);
+        statsLabels[2][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-5) - 30);
+        statsLabels[2][1].setFontScale(fontSize);
+        stage.addActor(statsLabels[2][1]);
+
+        statsLabels[3][0] = new Label("avg: ",labelStyle);
+        statsLabels[3][0].setSize(labelWidth,labelHeight);
+        statsLabels[3][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-4) - 30);
+        statsLabels[3][0].setFontScale(fontSize);
+        stage.addActor(statsLabels[3][0]);
+
+        statsLabels[3][1] = new Label("sum: ",labelStyle);
+        statsLabels[3][1].setSize(labelWidth,labelHeight);
+        statsLabels[3][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-5) - 30);
+        statsLabels[3][1].setFontScale(fontSize);
+        stage.addActor(statsLabels[3][1]);
+
+    }
+
     private float getBaselineShift (BitmapFont font) {
         if (font == distanceFieldFont) {
             // We set -8 paddingAdvanceY in Hiero to compensate for 4 padding on each side.
@@ -476,37 +555,37 @@ public class PlayState extends State {
         }
     }
 
-    private int drawFont (SpriteBatch spriteBatch,BitmapFont font, boolean linearFiltering, boolean useShader, float smoothing, int x) {
-        int y = 10;
-        float maxWidth = 0;
-
-        // set filters for each page
-        TextureFilter minFilter = linearFiltering ? TextureFilter.MipMapLinearNearest : TextureFilter.Nearest;
-        TextureFilter magFilter = linearFiltering ? TextureFilter.Linear : TextureFilter.Nearest;
-        for (int i = 0; i < font.getRegions().size; i++) {
-            font.getRegion(i).getTexture().setFilter(minFilter, magFilter);
-        }
-
-        if (useShader) {
-            spriteBatch.setShader(distanceFieldShader);
-        } else {
-            spriteBatch.setShader(null);
-        }
-
-        for (float scale : SCALES) {
-            font.getData().setScale(scale);
-            layout.setText(font, TEXT);
-            maxWidth = Math.max(maxWidth, layout.width);
-            if (useShader) {
-                distanceFieldShader.setSmoothing(smoothing / scale);
-            }
-            font.draw(spriteBatch, layout, x, y);
-            y += font.getLineHeight();
-            spriteBatch.flush();
-        }
-        getBaselineShift(distanceFieldFont);
-        return (int)Math.ceil(maxWidth);
-    }
+//    private int drawFont (SpriteBatch spriteBatch,BitmapFont font, boolean linearFiltering, boolean useShader, float smoothing, int x) {
+//        int y = 10;
+//        float maxWidth = 0;
+//
+//        // set filters for each page
+//        TextureFilter minFilter = linearFiltering ? TextureFilter.MipMapLinearNearest : TextureFilter.Nearest;
+//        TextureFilter magFilter = linearFiltering ? TextureFilter.Linear : TextureFilter.Nearest;
+//        for (int i = 0; i < font.getRegions().size; i++) {
+//            font.getRegion(i).getTexture().setFilter(minFilter, magFilter);
+//        }
+//
+//        if (useShader) {
+//            spriteBatch.setShader(distanceFieldShader);
+//        } else {
+//            spriteBatch.setShader(null);
+//        }
+//
+//        for (float scale : SCALES) {
+//            font.getData().setScale(scale);
+//            layout.setText(font, TEXT);
+//            maxWidth = Math.max(maxWidth, layout.width);
+//            if (useShader) {
+//                distanceFieldShader.setSmoothing(smoothing / scale);
+//            }
+//            font.draw(spriteBatch, layout, x, y);
+//            y += font.getLineHeight();
+//            spriteBatch.flush();
+//        }
+//        getBaselineShift(distanceFieldFont);
+//        return (int)Math.ceil(maxWidth);
+//    }
 
     @Override
     public void dispose() {
