@@ -3,6 +3,8 @@ package com.jerabek.clovece.States;
 
 import com.badlogic.gdx.Gdx;
 
+import com.badlogic.gdx.assets.loaders.FileHandleResolver;
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 
@@ -14,6 +16,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -82,12 +85,12 @@ public class PlayState extends State {
     private int playersCount = 4, pieceCount = 4;
     private Piece[] piece = new Piece[pieceCount*playersCount];
     private Player[] player = new Player[playersCount];
-    private Label[][] statsLabels = new Label[playersCount][2];
+    private Label[][] statsLabels = new Label[playersCount][3];
 
     DecimalFormat df2 = new DecimalFormat("#.##");
 
     private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
-
+    Vector3 touchPoint;
 
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
@@ -97,8 +100,9 @@ public class PlayState extends State {
     private Piece movingPiece = null;
     private int nextField, dice = 0;
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
-    private Texture deska = new Texture("deskaq.png");
-    boolean playerSelectedPiece = false, diceRolled = false;
+    private Texture deska = new Texture("deskaq.png") , pieceMark;
+    private boolean playerSelectedPiece = false, diceRolled = false;
+    private String zero = "Kick\n", one = "Total:\n";
 
 
     public PlayState(GameStateManager gsm) {
@@ -108,10 +112,8 @@ public class PlayState extends State {
 
         Gdx.input.setInputProcessor(stage);
 
-        pixelWidth = Gdx.graphics.getWidth() / 1080f;
-        pixelHeight = Gdx.graphics.getHeight() / 1794f;
-        if(pixelHeight < 1.2) pixelHeight+=0.05f;
-        Texture dice = new Texture("dice.png");
+//        dice = new Texture("dice.png");
+        pieceMark = new Texture("pieceMark.png");
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
         distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
@@ -119,7 +121,6 @@ public class PlayState extends State {
         distanceFieldFont.setColor(COLOR);
         distanceFieldShader = new DistanceFieldShader();
         labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
-
 
         fieldImg[0] = new Texture("pole.png");
         fieldImg[1] = new Texture("poleB.png");
@@ -152,6 +153,7 @@ public class PlayState extends State {
         rollButton();
         statsLabels();
 
+        touchPoint = new Vector3();
         statsLabels[2][0].setText("y: " + pixelHeight);
         statsLabels[2][1].setText("x: " + pixelWidth);
     }
@@ -161,6 +163,8 @@ public class PlayState extends State {
             if(piece[movablePieces.get(a)].getX()==x && piece[movablePieces.get(a)].getY()==y){
                 fromField = piece[movablePieces.get(a)].getFieldNumber();
                 playerSelectedPiece = true;
+
+
             }
         }
     }
@@ -168,14 +172,17 @@ public class PlayState extends State {
     @Override
     public void handleInput() {
         if(Gdx.input.justTouched()){
-            touchx = ((Gdx.input.getX() / pixelWidth) - 540) ;
-            touchy = (897 - (Gdx.input.getY() / pixelHeight));
+            touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+            cam.unproject(touchPoint);
+
+            touchx = (touchPoint.x - (cam.viewportWidth / 2));
+            touchy = (touchPoint.y - (cam.viewportHeight / 2));
 
             touchx = round(touchx / zoom );
             touchy = round(touchy / zoom );
-
-            statsLabels[0][0].setText("x: " + touchx);
-            statsLabels[0][1].setText("y: " + touchy);
+//
+//            statsLabels[0][0].setText("x: " + touchx);
+//            statsLabels[0][1].setText("y: " + touchy);
         }
     }
 
@@ -196,17 +203,19 @@ public class PlayState extends State {
                     }
                     if(!movablePieces.isEmpty()) { // pokud je dostupna figurka pro pohyb
                         if(!playerSelectedPiece) { // a hrač žadnou nevybral
+
                             if(player[currentPlayer].getAi() == 0){
                                 handleInput();
                                 getPieceByXY(touchx, touchy);
+                                //getPieceByXY(touchx, touchy);
                             }else{
                                 callAi(player[currentPlayer].getAi());
                             }
 
-                        }
-                        if(playerSelectedPiece){
+                        } else {
                             setMove();//hodit kostkou
                             turnOver = false;
+
                         }
                     } else turnOver = false;
                 } else {
@@ -230,7 +239,6 @@ public class PlayState extends State {
         }
     }
 
-
     private void callAi(int ai) {
         switch(ai){
             case 1:
@@ -247,6 +255,7 @@ public class PlayState extends State {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
+
         sb.draw(deska, cam.position.x, cam.position.y - deska.getHeight(),
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, cam.position.x, cam.position.y,
@@ -260,6 +269,7 @@ public class PlayState extends State {
 
         refreshBoard(sb);
         paintPieces(sb);
+
         //int x = 10;
         //x += drawFont(sb, distanceFieldFont, true, true, 1f, x);
         sb.end();
@@ -274,26 +284,18 @@ public class PlayState extends State {
             if (fromField > 39) nasazeni = true; else nasazeni = false;
             movingPiece = piece[data[fromField].getPieceID()];
             setMoveTarget();
-            player[currentPlayer].setRound(player[currentPlayer].getRound()+1);
+
             //round[currentPlayer]++;
             player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
             //stats[currentPlayer] += dice;
-            statsLabels[currentPlayer][0].setText("avg: " + df2.format(player[currentPlayer].getSum() / player[currentPlayer].getRound()));
-            statsLabels[currentPlayer][1].setText("sum: " + player[currentPlayer].getSum());
+            statsLabels[currentPlayer][1].setText(one + player[currentPlayer].getSum());
 
-    }
-
-    private void markTargetFields() {
-        for(int i = 0; i < movablePieces.size(); i++) {
-            // nejak označit - piece[movablePieces.get(i)]
-            // na jeho pozici vykreslit button nebo chytit klik
-        }
     }
 
     private void checkWin() {
         if(home[currentPlayer]==pieceCount && !move){
             gameOver = true;
-            outputLabel.setText(player[currentPlayer].getName() + " player wins!");
+            outputLabel.setText(player[currentPlayer].getName() + " wins!");
         }
     }
 
@@ -315,6 +317,8 @@ public class PlayState extends State {
             int targetPiece = data[targetField].getPieceID();
             if (targetPiece != -1) {
                 kickPiece(targetPiece);
+                player[currentPlayer].setRound(player[currentPlayer].getRound()+1);
+                statsLabels[currentPlayer][0].setText(zero + player[currentPlayer].getRound());
             }
             movingPiece.setFieldNumber(targetField);
             data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
@@ -424,7 +428,7 @@ public class PlayState extends State {
                 }
                 //pro nasazeni nove figurky
                 else if (pieceField < 44 + 8 * currentPlayer && pieceField > 39 + 8 * currentPlayer){
-                    int targetPiece = data[currentPlayer*10].getPieceID();
+                    int targetPiece = data[getStartFieldByPlayer()].getPieceID();
                     if ((dice == 6)) {
                         if(targetPiece == -1) {
                             movablePieces.add(piece[i].getPieceId());
@@ -452,6 +456,25 @@ public class PlayState extends State {
         return movablePieces;
     }
 
+    public int getStartFieldByPlayer(){
+        int fieldNumber = 0;
+        switch (currentPlayer) {
+            case 0:
+                fieldNumber = 10;
+                break;
+            case 1:
+                fieldNumber = 20;
+                break;
+            case 2:
+                fieldNumber = 30;
+                break;
+            case 3:
+                fieldNumber = 0;
+                break;
+        }
+        return fieldNumber;
+    }
+
     private void paintPieces(SpriteBatch sb){
         Piece[] pieceSort;
         pieceSort = piece.clone();
@@ -469,10 +492,20 @@ public class PlayState extends State {
             }
         }
 
-        for(Piece pieces : pieceSort)
+        for(Piece pieces : pieceSort) {
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
                     cam.position.y + pieces.getY() * zoom - pieceSize * 0.4f);
+        }
+
+        //zvyrazni hejbatelne figurky
+        if(!playerSelectedPiece && !movablePieces.isEmpty()){
+            for(int pieceID : movablePieces){
+                sb.draw(pieceMark,
+                        cam.position.x + piece[pieceID].getX() * zoom - pieceMark.getWidth() / 2,
+                        cam.position.y + piece[pieceID].getY() * zoom - 35);
+            }
+        }
     }
 
     private void refreshBoard(SpriteBatch sb) {
@@ -537,7 +570,7 @@ public class PlayState extends State {
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
-        outputLabel.setFontScale(1.5f);
+        outputLabel.setFontScale(2f);
         outputLabel.setStyle(labelStyle);
 
         stage.addActor(outputLabel);
@@ -545,51 +578,79 @@ public class PlayState extends State {
 
     public void statsLabels(){
         int labelWidth = 80, labelHeight = 40;
-        float fontSize = 0.85f;
 
-        statsLabels[0][0] = new Label("avg: ",labelStyle);
+        float fontSize = 0.85f;
+        //0
+        statsLabels[0][2] = new Label(player[0].getName(),labelStyle);
+        statsLabels[0][2].setSize(labelWidth,labelHeight);
+        statsLabels[0][2].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[0][2].setFontScale(fontSize);
+        stage.addActor(statsLabels[0][2]);
+
+        statsLabels[0][0] = new Label(zero,labelStyle);
         statsLabels[0][0].setSize(labelWidth,labelHeight);
-        statsLabels[0][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[0][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (4) - 30);
         statsLabels[0][0].setFontScale(fontSize);
         stage.addActor(statsLabels[0][0]);
 
-        statsLabels[0][1] = new Label("sum: ",labelStyle);
+        statsLabels[0][1] = new Label(one,labelStyle);
         statsLabels[0][1].setSize(labelWidth,labelHeight);
-        statsLabels[0][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (4) - 30);
+        statsLabels[0][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (3) - 30);
         statsLabels[0][1].setFontScale(fontSize);
         stage.addActor(statsLabels[0][1]);
 
-        statsLabels[1][0] = new Label("avg: ",labelStyle);
+        //p1
+        statsLabels[1][2] = new Label(player[1].getName(),labelStyle);
+        statsLabels[1][2].setSize(labelWidth,labelHeight);
+        statsLabels[1][2].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[1][2].setFontScale(fontSize);
+        stage.addActor(statsLabels[1][2]);
+
+        statsLabels[1][0] = new Label(zero,labelStyle);
         statsLabels[1][0].setSize(labelWidth,labelHeight);
-        statsLabels[1][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (5) - 30);
+        statsLabels[1][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (4) - 30);
         statsLabels[1][0].setFontScale(fontSize);
         stage.addActor(statsLabels[1][0]);
 
-        statsLabels[1][1] = new Label("sum: ",labelStyle);
+        statsLabels[1][1] = new Label(one,labelStyle);
         statsLabels[1][1].setSize(labelWidth,labelHeight);
-        statsLabels[1][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (4) - 30);
+        statsLabels[1][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (3) - 30);
         statsLabels[1][1].setFontScale(fontSize);
         stage.addActor(statsLabels[1][1]);
 
-        statsLabels[2][0] = new Label("avg: ",labelStyle);
+        //p2
+        statsLabels[2][2] = new Label(player[2].getName(),labelStyle);
+        statsLabels[2][2].setSize(labelWidth,labelHeight);
+        statsLabels[2][2].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-3) - 30);
+        statsLabels[2][2].setFontScale(fontSize);
+        stage.addActor(statsLabels[2][2]);
+
+        statsLabels[2][0] = new Label(zero,labelStyle);
         statsLabels[2][0].setSize(labelWidth,labelHeight);
         statsLabels[2][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-4) - 30);
         statsLabels[2][0].setFontScale(fontSize);
         stage.addActor(statsLabels[2][0]);
 
-        statsLabels[2][1] = new Label("sum: ",labelStyle);
+        statsLabels[2][1] = new Label(one,labelStyle);
         statsLabels[2][1].setSize(labelWidth,labelHeight);
         statsLabels[2][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-5) - 30);
         statsLabels[2][1].setFontScale(fontSize);
         stage.addActor(statsLabels[2][1]);
 
-        statsLabels[3][0] = new Label("avg: ",labelStyle);
+        //p3
+        statsLabels[3][2] = new Label(player[3].getName(),labelStyle);
+        statsLabels[3][2].setSize(labelWidth,labelHeight);
+        statsLabels[3][2].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-3) - 30);
+        statsLabels[3][2].setFontScale(fontSize);
+        stage.addActor(statsLabels[3][2]);
+
+        statsLabels[3][0] = new Label(zero,labelStyle);
         statsLabels[3][0].setSize(labelWidth,labelHeight);
         statsLabels[3][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-4) - 30);
         statsLabels[3][0].setFontScale(fontSize);
         stage.addActor(statsLabels[3][0]);
 
-        statsLabels[3][1] = new Label("sum: ",labelStyle);
+        statsLabels[3][1] = new Label(one,labelStyle);
         statsLabels[3][1].setSize(labelWidth,labelHeight);
         statsLabels[3][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-5) - 30);
         statsLabels[3][1].setFontScale(fontSize);
@@ -658,5 +719,4 @@ public class PlayState extends State {
 
     }
 
-    public enum player {blue, yellow, red, green}
 }

@@ -23,6 +23,10 @@ public class Piece {
     }
 
 
+    public void setTexture(Texture texture) {
+        this.texture = texture;
+    }
+
     Piece(int x, int y, int id, int playerId, int FieldNumber){
         this.x = x;
         this.y = y;
