@@ -185,16 +185,13 @@ public class PlayState extends State {
         if(!gameOver) {
             if ( framePerThrow > 5 || player[currentPlayer].getAi()==0 ) {
                 if ( turnOver ) {
-
                     if(!diceRolled) {
                         if(player[currentPlayer].getAi()==0){
                             dice = throwDice();
                             getMovablePieces(currentPlayer, dice);
-
                         } else {
                             dice = throwDice();
                             getMovablePieces(currentPlayer, dice);
-
                         }
                     }
                     if(!movablePieces.isEmpty()) { // pokud je dostupna figurka pro pohyb
