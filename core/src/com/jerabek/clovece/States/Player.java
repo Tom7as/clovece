@@ -8,14 +8,14 @@ public class Player {
     private String name;
     private int ai;
     private int sum;
-    private int round;
+    private int sixs;
 
 
-    public Player(String name, int ai, int stats, int round) {
+    public Player(String name, int ai, int stats, int sixs) {
         this.name = name;
         this.ai = ai;
         this.sum = stats;
-        this.round = round;
+        this.sixs = sixs;
     }
 
     public String getName() {
@@ -42,11 +42,15 @@ public class Player {
         this.sum = sum;
     }
 
-    public int getRound() {
-        return round;
+    public int getSixs() {
+        return sixs;
     }
 
-    public void setRound(int round) {
-        this.round = round;
+    public void setSixs(int sixs) {
+        this.sixs = sixs;
+    }
+
+    public void addSix(){
+        this.sixs += 1;
     }
 }

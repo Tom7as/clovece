@@ -3,8 +3,6 @@ package com.jerabek.clovece.States;
 
 import com.badlogic.gdx.Gdx;
 
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 
@@ -28,7 +26,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.jerabek.clovece.CloveceNezlobSe;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -102,7 +99,7 @@ public class PlayState extends State {
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
     private Texture deska = new Texture("deskaq.png") , pieceMark;
     private boolean playerSelectedPiece = false, diceRolled = false;
-    private String zero = "Kick\n", one = "Total:\n";
+    private String zero = "Six's: ", one = "Total:\n";
 
 
     public PlayState(GameStateManager gsm) {
@@ -112,13 +109,13 @@ public class PlayState extends State {
 
         Gdx.input.setInputProcessor(stage);
 
-//        dice = new Texture("dice.png");
+//      dice = new Texture("dice.png");
         pieceMark = new Texture("pieceMark.png");
 
         distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
-        distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"), new TextureRegion(
-                distanceFieldTexture), false);
-        distanceFieldFont.setColor(COLOR);
+        distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"),
+                                            new TextureRegion(distanceFieldTexture), false);
+
         distanceFieldShader = new DistanceFieldShader();
         labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
 
@@ -194,14 +191,19 @@ public class PlayState extends State {
                 if ( turnOver ) {
                     if(!diceRolled) {
                         if(player[currentPlayer].getAi()==0){
-                            dice = throwDice();
-                            getMovablePieces(currentPlayer, dice);
+
+                            if(rollBtnPressed){
+                                rollBtnPressed = false;
+                                diceRolled = true;
+                                getMovablePieces(currentPlayer, dice);
+                            } else rollButton.setVisible(true);
                         } else {
                             dice = throwDice();
+                            diceRolled = true;
                             getMovablePieces(currentPlayer, dice);
                         }
                     }
-                    if(!movablePieces.isEmpty()) { // pokud je dostupna figurka pro pohyb
+                    if(!movablePieces.isEmpty() && diceRolled) { // pokud je dostupna figurka pro pohyb
                         if(!playerSelectedPiece) { // a hrač žadnou nevybral
 
                             if(player[currentPlayer].getAi() == 0){
@@ -217,7 +219,7 @@ public class PlayState extends State {
                             turnOver = false;
 
                         }
-                    } else turnOver = false;
+                    } else if (diceRolled) turnOver = false;
                 } else {
                     if(move){startMove();}
                     else {
@@ -317,8 +319,7 @@ public class PlayState extends State {
             int targetPiece = data[targetField].getPieceID();
             if (targetPiece != -1) {
                 kickPiece(targetPiece);
-                player[currentPlayer].setRound(player[currentPlayer].getRound()+1);
-                statsLabels[currentPlayer][0].setText(zero + player[currentPlayer].getRound());
+                player[currentPlayer].setSixs(player[currentPlayer].getSixs()+1);
             }
             movingPiece.setFieldNumber(targetField);
             data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
@@ -418,6 +419,7 @@ public class PlayState extends State {
                 //pro normalni posun po ploše
                 if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
                     int targetPiece = data[pieceField + dice].getPieceID();
+                    if(targetPiece > 39) targetPiece -= 40;
                     if(targetPiece == -1) {
                         movablePieces.add(piece[i].getPieceId());
                     }else{
@@ -492,12 +494,6 @@ public class PlayState extends State {
             }
         }
 
-        for(Piece pieces : pieceSort) {
-            sb.draw(pieces.getTexture(),
-                    cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
-                    cam.position.y + pieces.getY() * zoom - pieceSize * 0.4f);
-        }
-
         //zvyrazni hejbatelne figurky
         if(!playerSelectedPiece && !movablePieces.isEmpty()){
             for(int pieceID : movablePieces){
@@ -506,6 +502,14 @@ public class PlayState extends State {
                         cam.position.y + piece[pieceID].getY() * zoom - 35);
             }
         }
+
+        for(Piece pieces : pieceSort) {
+            sb.draw(pieces.getTexture(),
+                    cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
+                    cam.position.y + pieces.getY() * zoom - pieceSize * 0.4f);
+        }
+
+
     }
 
     private void refreshBoard(SpriteBatch sb) {
@@ -530,10 +534,15 @@ public class PlayState extends State {
 
     private int throwDice(){
         dice = random(1,6);
-        if(dice==6) rollAgain = true;
+        if(dice==6) {
+            rollAgain = true;
+            //player[currentPlayer].setSixs(player[currentPlayer].getSixs() + 1);
+            player[currentPlayer].addSix();
+            statsLabels[currentPlayer][0].setText(zero + player[currentPlayer].getSixs());
+        }
         outputLabel.setText(player[currentPlayer].getName() + " threw " + dice);
         rollButton.setVisible(false);
-        diceRolled = true;
+
         return dice;
 
     }
@@ -553,8 +562,9 @@ public class PlayState extends State {
         rollButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-                //outputLabel.setText("Player" + nextPlayer +" is on turn");
+//                outputLabel.setText("Player" + nextPlayer +" is on turn");
                 rollBtnPressed = true;
+                dice = throwDice();
                 rollButton.setVisible(false);
             }
             @Override
@@ -658,15 +668,15 @@ public class PlayState extends State {
 
     }
 
-    private float getBaselineShift (BitmapFont font) {
-        if (font == distanceFieldFont) {
-            // We set -8 paddingAdvanceY in Hiero to compensate for 4 padding on each side.
-            // Unfortunately the padding affects the baseline inside the font description.
-            return -8;
-        } else {
-            return 0;
-        }
-    }
+//    private float getBaselineShift (BitmapFont font) {
+//        if (font == distanceFieldFont) {
+//            // We set -8 paddingAdvanceY in Hiero to compensate for 4 padding on each side.
+//            // Unfortunately the padding affects the baseline inside the font description.
+//            return -8;
+//        } else {
+//            return 0;
+//        }
+//    }
 
 //    private int drawFont (SpriteBatch spriteBatch,BitmapFont font, boolean linearFiltering, boolean useShader, float smoothing, int x) {
 //        int y = 10;
