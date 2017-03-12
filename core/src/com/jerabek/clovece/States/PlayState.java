@@ -11,8 +11,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -45,31 +43,15 @@ public class PlayState extends State {
 
     private int error;
 
-    private static class DistanceFieldShader extends ShaderProgram {
-        public DistanceFieldShader () {
-            super(Gdx.files.internal("distancefield.vert"), Gdx.files.internal("distancefield.frag"));
-            if (!isCompiled()) {
-                throw new RuntimeException("Shader compilation failed:\n" + getLog());
-            }
-        }
 
-        /** @param smoothing a value between 0 and 1 */
-        public void setSmoothing (float smoothing) {
-            float delta = 0.5f * MathUtils.clamp(smoothing, 0, 1);
-            setUniformf("u_lower", 0.5f - delta);
-            setUniformf("u_upper", 0.5f + delta);
-        }
-    }
-
-    private Texture distanceFieldTexture;
-    private BitmapFont distanceFieldFont;
-    private DistanceFieldShader distanceFieldShader;
+    private Texture segoe96Texture, segoe48Texture , segoe36Texture;
+    private BitmapFont segoe96Font, segoe48Font, segoe36Font;
     private GlyphLayout layout = new GlyphLayout();
 
     private Texture[] fieldImg = new Texture[5];
     private Stage stage;
 
-    private LabelStyle labelStyle;
+    private LabelStyle fontStyle96, fontStyle48, fontStyle36;
     private Label outputLabel;
 
     private int zoom = 90;
@@ -97,9 +79,9 @@ public class PlayState extends State {
     private Piece movingPiece = null;
     private int nextField, dice = 0;
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
-    private Texture deska = new Texture("deskaq.png") , pieceMark;
+    private Texture woodTexture = new Texture("wood.png"), deska = new Texture("deskaq.png") , pieceMark;
     private boolean playerSelectedPiece = false, diceRolled = false;
-    private String zero = "Six's: ", one = "Total:\n";
+    private String sixString = "Six's: ", totalString = "Total:";
 
 
     public PlayState(GameStateManager gsm) {
@@ -112,12 +94,19 @@ public class PlayState extends State {
 //      dice = new Texture("dice.png");
         pieceMark = new Texture("pieceMark.png");
 
-        distanceFieldTexture = new Texture(Gdx.files.internal("verdana39distancefield.png"), false);
-        distanceFieldFont = new BitmapFont(Gdx.files.internal("verdana39distancefield.fnt"),
-                                            new TextureRegion(distanceFieldTexture), false);
+        segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
+        segoe96Font = new BitmapFont(Gdx.files.internal("font/segoe96.fnt"), new TextureRegion(segoe96Texture), false);
 
-        distanceFieldShader = new DistanceFieldShader();
-        labelStyle = new LabelStyle(distanceFieldFont, Color.BLACK);
+        segoe48Texture = new Texture(Gdx.files.internal("font/segoe48.png"), false);
+        segoe48Font = new BitmapFont(Gdx.files.internal("font/segoe48.fnt"), new TextureRegion(segoe48Texture), false);
+
+        segoe36Texture = new Texture(Gdx.files.internal("font/segoe36.png"), false);
+        segoe36Font = new BitmapFont(Gdx.files.internal("font/segoe36.fnt"), new TextureRegion(segoe36Texture), false);
+
+
+        fontStyle96 = new LabelStyle(segoe96Font, Color.BLACK);
+        fontStyle48 = new LabelStyle(segoe48Font, Color.BLACK);
+        fontStyle36 = new LabelStyle(segoe36Font, Color.BLACK);
 
         fieldImg[0] = new Texture("pole.png");
         fieldImg[1] = new Texture("poleB.png");
@@ -132,7 +121,7 @@ public class PlayState extends State {
                                          data[40+a*8+b].getY(),
                                          a*4+b,
                                          a,
-                                         40+a*8+b );
+                                         40+a*8+b);
                 data[40+a*8+b].setPieceID(a*4+b);
             }
         }
@@ -145,14 +134,11 @@ public class PlayState extends State {
             player[3] = new Player("Green AI", 1, 0, 0);
         //}
 
-
         label();
         rollButton();
         statsLabels();
 
         touchPoint = new Vector3();
-        statsLabels[2][0].setText("y: " + pixelHeight);
-        statsLabels[2][1].setText("x: " + pixelWidth);
     }
 
     public void getPieceByXY(float x, float y){
@@ -177,9 +163,6 @@ public class PlayState extends State {
 
             touchx = round(touchx / zoom );
             touchy = round(touchy / zoom );
-//
-//            statsLabels[0][0].setText("x: " + touchx);
-//            statsLabels[0][1].setText("y: " + touchy);
         }
     }
 
@@ -187,7 +170,7 @@ public class PlayState extends State {
     public void update(float dt) {
         checkWin();
         if(!gameOver) {
-            if ( framePerThrow > 5 || player[currentPlayer].getAi()==0 ) {
+            if ( framePerThrow > 20 || player[currentPlayer].getAi()==0 ) {
                 if ( turnOver ) {
                     if(!diceRolled) {
                         if(player[currentPlayer].getAi()==0){
@@ -210,7 +193,7 @@ public class PlayState extends State {
                                 handleInput();
                                 getPieceByXY(touchx, touchy);
                                 //getPieceByXY(touchx, touchy);
-                            }else{
+                            }else if (framePerThrow > 40){
                                 callAi(player[currentPlayer].getAi());
                             }
 
@@ -257,7 +240,7 @@ public class PlayState extends State {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-
+        sb.draw(woodTexture, 0, 0, 1080, 2100, 0, 0, 1, 1);
         sb.draw(deska, cam.position.x, cam.position.y - deska.getHeight(),
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, cam.position.x, cam.position.y,
@@ -273,7 +256,7 @@ public class PlayState extends State {
         paintPieces(sb);
 
         //int x = 10;
-        //x += drawFont(sb, distanceFieldFont, true, true, 1f, x);
+        //x += drawFont(sb, arialFont, true, true, 1f, x);
         sb.end();
 
         stage.act();
@@ -290,8 +273,7 @@ public class PlayState extends State {
             //round[currentPlayer]++;
             player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
             //stats[currentPlayer] += dice;
-            statsLabels[currentPlayer][1].setText(one + player[currentPlayer].getSum());
-
+            statsLabels[currentPlayer][1].setText(totalString + player[currentPlayer].getSum());
     }
 
     private void checkWin() {
@@ -480,6 +462,7 @@ public class PlayState extends State {
     private void paintPieces(SpriteBatch sb){
         Piece[] pieceSort;
         pieceSort = piece.clone();
+
         //seřazení pro odstranení překryvů
         for (int i = 0; i<pieceSort.length; i++)
         {
@@ -503,6 +486,7 @@ public class PlayState extends State {
             }
         }
 
+        //vykresli figurky
         for(Piece pieces : pieceSort) {
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
@@ -536,9 +520,9 @@ public class PlayState extends State {
         dice = random(1,6);
         if(dice==6) {
             rollAgain = true;
-            //player[currentPlayer].setSixs(player[currentPlayer].getSixs() + 1);
+
             player[currentPlayer].addSix();
-            statsLabels[currentPlayer][0].setText(zero + player[currentPlayer].getSixs());
+            statsLabels[currentPlayer][0].setText(sixString + player[currentPlayer].getSixs());
         }
         outputLabel.setText(player[currentPlayer].getName() + " threw " + dice);
         rollButton.setVisible(false);
@@ -557,7 +541,7 @@ public class PlayState extends State {
 
     public void rollButton(){
         rollButton.setSize(500,150);
-        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 9 * zoom );
+        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 8 * zoom );
         rollButton.getLabel().setFontScale(2,2);
         rollButton.addListener(new InputListener(){
             @Override
@@ -576,139 +560,82 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label(player[currentPlayer].getName() + " is on turn",comicSkin);
+        outputLabel = new Label(player[currentPlayer].getName() + " is on turn",fontStyle96);
         outputLabel.setSize(stage.getWidth(),80);
         outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
         outputLabel.setAlignment(Align.center);
-        outputLabel.setFontScale(2f);
-        outputLabel.setStyle(labelStyle);
-
         stage.addActor(outputLabel);
     }
 
-    public void statsLabels(){
+    public void statsLabels() {
         int labelWidth = 80, labelHeight = 40;
 
-        float fontSize = 0.85f;
+        float fontSize = 1;
         //0
-        statsLabels[0][2] = new Label(player[0].getName(),labelStyle);
-        statsLabels[0][2].setSize(labelWidth,labelHeight);
-        statsLabels[0][2].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (5) - 30);
-        statsLabels[0][2].setFontScale(fontSize);
+        statsLabels[0][2] = new Label(player[0].getName(), fontStyle36);
+        statsLabels[0][2].setSize(labelWidth, labelHeight);
+        statsLabels[0][2].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (5));
         stage.addActor(statsLabels[0][2]);
 
-        statsLabels[0][0] = new Label(zero,labelStyle);
-        statsLabels[0][0].setSize(labelWidth,labelHeight);
-        statsLabels[0][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (4) - 30);
-        statsLabels[0][0].setFontScale(fontSize);
+        statsLabels[0][0] = new Label(sixString, fontStyle36);
+        statsLabels[0][0].setSize(labelWidth, labelHeight);
+        statsLabels[0][0].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (4));
         stage.addActor(statsLabels[0][0]);
 
-        statsLabels[0][1] = new Label(one,labelStyle);
-        statsLabels[0][1].setSize(labelWidth,labelHeight);
-        statsLabels[0][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (3) - 30);
-        statsLabels[0][1].setFontScale(fontSize);
+        statsLabels[0][1] = new Label(totalString, fontStyle36);
+        statsLabels[0][1].setSize(labelWidth, labelHeight);
+        statsLabels[0][1].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (4) - 50);
         stage.addActor(statsLabels[0][1]);
 
         //p1
-        statsLabels[1][2] = new Label(player[1].getName(),labelStyle);
-        statsLabels[1][2].setSize(labelWidth,labelHeight);
-        statsLabels[1][2].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (5) - 30);
-        statsLabels[1][2].setFontScale(fontSize);
+        statsLabels[1][2] = new Label(player[1].getName(), fontStyle36);
+        statsLabels[1][2].setSize(labelWidth, labelHeight);
+        statsLabels[1][2].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (5));
         stage.addActor(statsLabels[1][2]);
 
-        statsLabels[1][0] = new Label(zero,labelStyle);
-        statsLabels[1][0].setSize(labelWidth,labelHeight);
-        statsLabels[1][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (4) - 30);
-        statsLabels[1][0].setFontScale(fontSize);
+        statsLabels[1][0] = new Label(sixString, fontStyle36);
+        statsLabels[1][0].setSize(labelWidth, labelHeight);
+        statsLabels[1][0].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (4) );
         stage.addActor(statsLabels[1][0]);
 
-        statsLabels[1][1] = new Label(one,labelStyle);
-        statsLabels[1][1].setSize(labelWidth,labelHeight);
-        statsLabels[1][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (3) - 30);
-        statsLabels[1][1].setFontScale(fontSize);
+        statsLabels[1][1] = new Label(totalString, fontStyle36);
+        statsLabels[1][1].setSize(labelWidth, labelHeight);
+        statsLabels[1][1].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (4) - 50);
         stage.addActor(statsLabels[1][1]);
 
         //p2
-        statsLabels[2][2] = new Label(player[2].getName(),labelStyle);
-        statsLabels[2][2].setSize(labelWidth,labelHeight);
-        statsLabels[2][2].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-3) - 30);
-        statsLabels[2][2].setFontScale(fontSize);
+        statsLabels[2][2] = new Label(player[2].getName(), fontStyle36);
+        statsLabels[2][2].setSize(labelWidth, labelHeight);
+        statsLabels[2][2].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (-4));
         stage.addActor(statsLabels[2][2]);
 
-        statsLabels[2][0] = new Label(zero,labelStyle);
-        statsLabels[2][0].setSize(labelWidth,labelHeight);
-        statsLabels[2][0].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-4) - 30);
-        statsLabels[2][0].setFontScale(fontSize);
+        statsLabels[2][0] = new Label(sixString, fontStyle36);
+        statsLabels[2][0].setSize(labelWidth, labelHeight);
+        statsLabels[2][0].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (-5) + 10);
         stage.addActor(statsLabels[2][0]);
 
-        statsLabels[2][1] = new Label(one,labelStyle);
-        statsLabels[2][1].setSize(labelWidth,labelHeight);
-        statsLabels[2][1].setPosition(cam.position.x + zoom * 2f - 30, cam.position.y + zoom * (-5) - 30);
-        statsLabels[2][1].setFontScale(fontSize);
+        statsLabels[2][1] = new Label(totalString, fontStyle36);
+        statsLabels[2][1].setSize(labelWidth, labelHeight);
+        statsLabels[2][1].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (-5) - 40);
         stage.addActor(statsLabels[2][1]);
 
         //p3
-        statsLabels[3][2] = new Label(player[3].getName(),labelStyle);
-        statsLabels[3][2].setSize(labelWidth,labelHeight);
-        statsLabels[3][2].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-3) - 30);
-        statsLabels[3][2].setFontScale(fontSize);
+        statsLabels[3][2] = new Label(player[3].getName(), fontStyle36);
+        statsLabels[3][2].setSize(labelWidth, labelHeight);
+        statsLabels[3][2].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (-4));
         stage.addActor(statsLabels[3][2]);
 
-        statsLabels[3][0] = new Label(zero,labelStyle);
-        statsLabels[3][0].setSize(labelWidth,labelHeight);
-        statsLabels[3][0].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-4) - 30);
-        statsLabels[3][0].setFontScale(fontSize);
+        statsLabels[3][0] = new Label(sixString, fontStyle36);
+        statsLabels[3][0].setSize(labelWidth, labelHeight);
+        statsLabels[3][0].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (-5) + 10);
         stage.addActor(statsLabels[3][0]);
 
-        statsLabels[3][1] = new Label(one,labelStyle);
-        statsLabels[3][1].setSize(labelWidth,labelHeight);
-        statsLabels[3][1].setPosition(cam.position.x - zoom * 3f - 30, cam.position.y + zoom * (-5) - 30);
-        statsLabels[3][1].setFontScale(fontSize);
+        statsLabels[3][1] = new Label(totalString, fontStyle36);
+        statsLabels[3][1].setSize(labelWidth, labelHeight);
+        statsLabels[3][1].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (-5) - 40);
         stage.addActor(statsLabels[3][1]);
 
     }
-
-//    private float getBaselineShift (BitmapFont font) {
-//        if (font == distanceFieldFont) {
-//            // We set -8 paddingAdvanceY in Hiero to compensate for 4 padding on each side.
-//            // Unfortunately the padding affects the baseline inside the font description.
-//            return -8;
-//        } else {
-//            return 0;
-//        }
-//    }
-
-//    private int drawFont (SpriteBatch spriteBatch,BitmapFont font, boolean linearFiltering, boolean useShader, float smoothing, int x) {
-//        int y = 10;
-//        float maxWidth = 0;
-//
-//        // set filters for each page
-//        TextureFilter minFilter = linearFiltering ? TextureFilter.MipMapLinearNearest : TextureFilter.Nearest;
-//        TextureFilter magFilter = linearFiltering ? TextureFilter.Linear : TextureFilter.Nearest;
-//        for (int i = 0; i < font.getRegions().size; i++) {
-//            font.getRegion(i).getTexture().setFilter(minFilter, magFilter);
-//        }
-//
-//        if (useShader) {
-//            spriteBatch.setShader(distanceFieldShader);
-//        } else {
-//            spriteBatch.setShader(null);
-//        }
-//
-//        for (float scale : SCALES) {
-//            font.getData().setScale(scale);
-//            layout.setText(font, TEXT);
-//            maxWidth = Math.max(maxWidth, layout.width);
-//            if (useShader) {
-//                distanceFieldShader.setSmoothing(smoothing / scale);
-//            }
-//            font.draw(spriteBatch, layout, x, y);
-//            y += font.getLineHeight();
-//            spriteBatch.flush();
-//        }
-//        getBaselineShift(distanceFieldFont);
-//        return (int)Math.ceil(maxWidth);
-//    }
 
     @Override
     public void dispose() {
@@ -716,11 +643,14 @@ public class PlayState extends State {
         for(int i = 0; i < data.length; i++)
             fieldImg[i].dispose();
 
-        for(int i = 0; i < piece.length; i++)
-            piece[i].dispose();
-        distanceFieldTexture.dispose();
-        distanceFieldFont.dispose();
-        distanceFieldShader.dispose();
+        for (Piece aPiece : piece) aPiece.dispose();
+
+        segoe96Texture.dispose();
+        segoe96Font.dispose();
+        segoe48Texture.dispose();
+        segoe48Font.dispose();
+        segoe36Texture.dispose();
+        segoe36Font.dispose();
         System.out.println("Board Disposed");
     }
 
