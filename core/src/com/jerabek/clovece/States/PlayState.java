@@ -6,6 +6,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -23,6 +24,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.utils.Align;
+
+import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import java.text.DecimalFormat;
@@ -40,7 +43,7 @@ public class PlayState extends State {
     //renderovani textu
     private static final String TEXT = "textstring";
     private static final Color COLOR = Color.BLACK;
-
+    //Locale locale = new Locale("cz");
     private int error;
 
 
@@ -70,7 +73,7 @@ public class PlayState extends State {
 
     private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
     Vector3 touchPoint;
-
+    I18NBundle langStr;
     private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
     private TextButton rollButton = new TextButton("Roll dice", comicSkin);
     private enum playerType {NONE, HUMAN, AI_DUMB, AI_SAFE, AI_EVIL};
@@ -81,13 +84,24 @@ public class PlayState extends State {
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
     private Texture woodTexture = new Texture("wood.png"), deska = new Texture("deskaq.png") , pieceMark;
     private boolean playerSelectedPiece = false, diceRolled = false;
-    private String sixString = "Six's: ", totalString = "Total:";
-
+    private String sixString, totalStr;
+    private String playerStr, blueStr, redStr, yellowStr, greenStr, winStr, onTurnStr, threwStr;
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
+        langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));
+        playerStr = langStr.get("player");
+        blueStr = langStr.get("blue");
+        redStr = langStr.get("red");
+        yellowStr = langStr.get("yellow");
+        greenStr = langStr.get("green");
+        winStr = " " + langStr.get("win");
+        onTurnStr = " " + langStr.get("onTurn");
+        threwStr = " " + langStr.get("threw");
+        sixString = langStr.get("six");
+        totalStr = langStr.get("total");
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.66f, cam));
+        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
 
         Gdx.input.setInputProcessor(stage);
 
@@ -95,25 +109,29 @@ public class PlayState extends State {
         pieceMark = new Texture("pieceMark.png");
 
         segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
+        segoe96Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
         segoe96Font = new BitmapFont(Gdx.files.internal("font/segoe96.fnt"), new TextureRegion(segoe96Texture), false);
-
+        segoe96Font.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.MipMapNearestLinear);
         segoe48Texture = new Texture(Gdx.files.internal("font/segoe48.png"), false);
         segoe48Font = new BitmapFont(Gdx.files.internal("font/segoe48.fnt"), new TextureRegion(segoe48Texture), false);
-
+        segoe48Font.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.MipMapLinearLinear);
         segoe36Texture = new Texture(Gdx.files.internal("font/segoe36.png"), false);
+        segoe36Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
         segoe36Font = new BitmapFont(Gdx.files.internal("font/segoe36.fnt"), new TextureRegion(segoe36Texture), false);
-
+        segoe36Font.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.MipMapNearestLinear);
 
         fontStyle96 = new LabelStyle(segoe96Font, Color.BLACK);
         fontStyle48 = new LabelStyle(segoe48Font, Color.BLACK);
         fontStyle36 = new LabelStyle(segoe36Font, Color.BLACK);
 
         fieldImg[0] = new Texture("pole.png");
-        fieldImg[1] = new Texture("poleB.png");
-        fieldImg[2] = new Texture("poleY.png");
-        fieldImg[3] = new Texture("poleR.png");
-        fieldImg[4] = new Texture("poleG.png");
-
+        fieldImg[1] = new Texture("poleB.png"); // 1c78ff
+        fieldImg[2] = new Texture("poleY.png"); // ffcc00
+        fieldImg[3] = new Texture("poleR.png"); // e63434
+        fieldImg[4] = new Texture("poleG.png"); // 23c923
+        for(int a=0; a < fieldImg.length; a++) {
+            fieldImg[a].setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        }
         //nastav kameny
         for(int a=0; a < playersCount; a++){
             for(int b=0; b < pieceCount; b++){
@@ -128,10 +146,10 @@ public class PlayState extends State {
 
         //nastav hráče
         //for(int a=0; a < playersCount; a++){
-            player[0] = new Player("Player", 0, 0, 0);
-            player[1] = new Player("Yellow AI", 1, 0, 0);
-            player[2] = new Player("Red AI", 1, 0, 0);
-            player[3] = new Player("Green AI", 1, 0, 0);
+            player[0] = new Player(playerStr, 0, 0, 0);
+            player[1] = new Player(yellowStr, 1, 0, 0);
+            player[2] = new Player(redStr, 1, 0, 0);
+            player[3] = new Player(greenStr, 1, 0, 0);
         //}
 
         label();
@@ -170,7 +188,7 @@ public class PlayState extends State {
     public void update(float dt) {
         checkWin();
         if(!gameOver) {
-            if ( framePerThrow > 20 || player[currentPlayer].getAi()==0 ) {
+            if ( framePerThrow > 40 || player[currentPlayer].getAi()==0 ) {
                 if ( turnOver ) {
                     if(!diceRolled) {
                         if(player[currentPlayer].getAi()==0){
@@ -193,7 +211,7 @@ public class PlayState extends State {
                                 handleInput();
                                 getPieceByXY(touchx, touchy);
                                 //getPieceByXY(touchx, touchy);
-                            }else if (framePerThrow > 40){
+                            }else if (framePerThrow > 80){
                                 callAi(player[currentPlayer].getAi());
                             }
 
@@ -205,7 +223,7 @@ public class PlayState extends State {
                     } else if (diceRolled) turnOver = false;
                 } else {
                     if(move){startMove();}
-                    else {
+                    else if (framePerThrow > 80){
                         if(!rollAgain) nextPlayer();
                         rollBtnPressed = false;
                         diceRolled = false;
@@ -250,13 +268,9 @@ public class PlayState extends State {
         sb.draw(deska, cam.position.x - deska.getWidth() , cam.position.y,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
 
-
-
         refreshBoard(sb);
         paintPieces(sb);
 
-        //int x = 10;
-        //x += drawFont(sb, arialFont, true, true, 1f, x);
         sb.end();
 
         stage.act();
@@ -264,26 +278,22 @@ public class PlayState extends State {
     }
 
     private void setMove(){
-            //markTargetFields();
             movablePieces.clear();
             if (fromField > 39) nasazeni = true; else nasazeni = false;
             movingPiece = piece[data[fromField].getPieceID()];
             setMoveTarget();
-
-            //round[currentPlayer]++;
             player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
-            //stats[currentPlayer] += dice;
-            statsLabels[currentPlayer][1].setText(totalString + player[currentPlayer].getSum());
+            statsLabels[currentPlayer][1].setText(totalStr + " " + player[currentPlayer].getSum());
     }
 
     private void checkWin() {
         if(home[currentPlayer]==pieceCount && !move){
             gameOver = true;
-            outputLabel.setText(player[currentPlayer].getName() + " wins!");
+            outputLabel.setText(player[currentPlayer].getName() + winStr);
         }
     }
 
-    public void setMoveTarget(){
+    private void setMoveTarget(){
         Vector2 vector;
 
         if(!nasazeni){ // posunout dal
@@ -522,9 +532,9 @@ public class PlayState extends State {
             rollAgain = true;
 
             player[currentPlayer].addSix();
-            statsLabels[currentPlayer][0].setText(sixString + player[currentPlayer].getSixs());
+            statsLabels[currentPlayer][0].setText(sixString + " " + player[currentPlayer].getSixs());
         }
-        outputLabel.setText(player[currentPlayer].getName() + " threw " + dice);
+        outputLabel.setText(player[currentPlayer].getName() + threwStr + " " + dice);
         rollButton.setVisible(false);
 
         return dice;
@@ -536,12 +546,12 @@ public class PlayState extends State {
         nextPlayer++;
         if(nextPlayer > playersCount -1)
             nextPlayer = 0;
-        outputLabel.setText(player[currentPlayer].getName() + " is on turn");
+        outputLabel.setText(player[currentPlayer].getName() + onTurnStr);
     }
 
     public void rollButton(){
         rollButton.setSize(500,150);
-        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 8 * zoom );
+        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 8 * zoom + 20);
         rollButton.getLabel().setFontScale(2,2);
         rollButton.addListener(new InputListener(){
             @Override
@@ -560,9 +570,9 @@ public class PlayState extends State {
     }
 
     public void label(){
-        outputLabel = new Label(player[currentPlayer].getName() + " is on turn",fontStyle96);
+        outputLabel = new Label(player[currentPlayer].getName() + onTurnStr ,fontStyle96);
         outputLabel.setSize(stage.getWidth(),80);
-        outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom );
+        outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom - 30);
         outputLabel.setAlignment(Align.center);
         stage.addActor(outputLabel);
     }
@@ -582,7 +592,7 @@ public class PlayState extends State {
         statsLabels[0][0].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (4));
         stage.addActor(statsLabels[0][0]);
 
-        statsLabels[0][1] = new Label(totalString, fontStyle36);
+        statsLabels[0][1] = new Label(totalStr, fontStyle36);
         statsLabels[0][1].setSize(labelWidth, labelHeight);
         statsLabels[0][1].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (4) - 50);
         stage.addActor(statsLabels[0][1]);
@@ -598,7 +608,7 @@ public class PlayState extends State {
         statsLabels[1][0].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (4) );
         stage.addActor(statsLabels[1][0]);
 
-        statsLabels[1][1] = new Label(totalString, fontStyle36);
+        statsLabels[1][1] = new Label(totalStr, fontStyle36);
         statsLabels[1][1].setSize(labelWidth, labelHeight);
         statsLabels[1][1].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (4) - 50);
         stage.addActor(statsLabels[1][1]);
@@ -614,7 +624,7 @@ public class PlayState extends State {
         statsLabels[2][0].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (-5) + 10);
         stage.addActor(statsLabels[2][0]);
 
-        statsLabels[2][1] = new Label(totalString, fontStyle36);
+        statsLabels[2][1] = new Label(totalStr, fontStyle36);
         statsLabels[2][1].setSize(labelWidth, labelHeight);
         statsLabels[2][1].setPosition(cam.position.x + zoom * 2 - 40, cam.position.y + zoom * (-5) - 40);
         stage.addActor(statsLabels[2][1]);
@@ -630,7 +640,7 @@ public class PlayState extends State {
         statsLabels[3][0].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (-5) + 10);
         stage.addActor(statsLabels[3][0]);
 
-        statsLabels[3][1] = new Label(totalString, fontStyle36);
+        statsLabels[3][1] = new Label(totalStr, fontStyle36);
         statsLabels[3][1].setSize(labelWidth, labelHeight);
         statsLabels[3][1].setPosition(cam.position.x + zoom * (-3) - 40, cam.position.y + zoom * (-5) - 40);
         stage.addActor(statsLabels[3][1]);

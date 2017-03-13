@@ -1,6 +1,7 @@
 package com.jerabek.clovece.States;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.math.Vector2;
 
 
@@ -34,6 +35,7 @@ public class Piece {
         this.player = playerId;
         String[] pieceTexture = new String[]{"panakB.png", "panakY.png","panakR.png", "panakG.png"};
         this.texture = new Texture(pieceTexture[playerId]);
+        this.texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         this.fieldNumber = FieldNumber;
         this.startFieldNumber = FieldNumber;
     }
