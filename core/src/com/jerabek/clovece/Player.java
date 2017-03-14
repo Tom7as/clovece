@@ -1,4 +1,4 @@
-package com.jerabek.clovece.States;
+package com.jerabek.clovece;
 
 /**
  * Created by Tomas on 01.03.2017.

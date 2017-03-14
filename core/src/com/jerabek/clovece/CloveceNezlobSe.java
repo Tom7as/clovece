@@ -5,8 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.jerabek.clovece.States.GameStateManager;
-import com.jerabek.clovece.States.PlayState;
 
 public class CloveceNezlobSe extends ApplicationAdapter {
 
@@ -29,7 +27,8 @@ public class CloveceNezlobSe extends ApplicationAdapter {
 		//music.setVolume(0.1f);
 		//music.play();
 		//Gdx.gl.glClearColor(1, 0, 0, 1);
-		gsm.push(new PlayState(gsm));
+//		gsm.push(new PlayState(gsm));
+		gsm.push(new MenuState(gsm));
 	}
 
 	@Override

@@ -1,10 +1,8 @@
-package com.jerabek.clovece.States;
+package com.jerabek.clovece;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 /**
  * Created by Tomas on 12.02.2017.

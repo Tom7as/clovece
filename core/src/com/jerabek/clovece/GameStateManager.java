@@ -1,4 +1,4 @@
-package com.jerabek.clovece.States;
+package com.jerabek.clovece;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 

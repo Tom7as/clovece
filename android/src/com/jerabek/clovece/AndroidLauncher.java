@@ -1,19 +1,20 @@
 package com.jerabek.clovece;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.view.WindowManager;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
-import com.jerabek.clovece.States.PlayState;
 
-public class AndroidLauncher extends FragmentActivity implements  AndroidFragmentApplication.Callbacks {
+public class AndroidLauncher extends AndroidApplication {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
+		config.useAccelerometer = false;
+		config.useCompass = false;
+		initialize(new CloveceNezlobSe(), config);
 
+		/*
 		setContentView(R.layout.layout);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		// Create libgdx fragment
@@ -23,6 +24,7 @@ public class AndroidLauncher extends FragmentActivity implements  AndroidFragmen
 		getSupportFragmentManager().beginTransaction().
 				add(R.id.content_framelayout, libgdxFragment).
 				commit();
+		*/
 	}
 
 	@Override

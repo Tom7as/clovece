@@ -1,4 +1,4 @@
-package com.jerabek.clovece.States;
+package com.jerabek.clovece;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
@@ -33,7 +33,7 @@ public class Piece {
         this.y = y;
         this.pieceId = id;
         this.player = playerId;
-        String[] pieceTexture = new String[]{"panakB.png", "panakY.png","panakR.png", "panakG.png"};
+        String[] pieceTexture = new String[]{"gameImage/panakB.png", "gameImage/panakY.png","gameImage/panakR.png", "gameImage/panakG.png"};
         this.texture = new Texture(pieceTexture[playerId]);
         this.texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         this.fieldNumber = FieldNumber;

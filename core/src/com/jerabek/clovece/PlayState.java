@@ -1,4 +1,4 @@
-package com.jerabek.clovece.States;
+package com.jerabek.clovece;
 
 
 import com.badlogic.gdx.Gdx;
@@ -40,16 +40,8 @@ import static com.jerabek.clovece.CloveceNezlobSe.*;
  */
 public class PlayState extends State {
 
-    //renderovani textu
-    private static final String TEXT = "textstring";
-    private static final Color COLOR = Color.BLACK;
-    //Locale locale = new Locale("cz");
-    private int error;
-
-
     private Texture segoe96Texture, segoe48Texture , segoe36Texture;
     private BitmapFont segoe96Font, segoe48Font, segoe36Font;
-    private GlyphLayout layout = new GlyphLayout();
 
     private Texture[] fieldImg = new Texture[5];
     private Stage stage;
@@ -60,36 +52,34 @@ public class PlayState extends State {
     private int zoom = 90;
     private float fieldSize = 94, smallFieldSize = fieldSize*0.85f, pieceSize = 61;
 
-    private GameField[] data = GameField.getData();
+    private com.jerabek.clovece.GameField[] data = com.jerabek.clovece.GameField.getData();
 
     private ArrayList<Integer> movablePieces = new ArrayList<Integer>();
 
     private int playersCount = 4, pieceCount = 4;
-    private Piece[] piece = new Piece[pieceCount*playersCount];
-    private Player[] player = new Player[playersCount];
+    private com.jerabek.clovece.Piece[] piece = new com.jerabek.clovece.Piece[pieceCount*playersCount];
+    private com.jerabek.clovece.Player[] player = new com.jerabek.clovece.Player[playersCount];
     private Label[][] statsLabels = new Label[playersCount][3];
 
-    DecimalFormat df2 = new DecimalFormat("#.##");
-
-    private int currentPlayer=0, nextPlayer=1, touchedPieces, framePerThrow =0, fromField, targetField;
-    Vector3 touchPoint;
-    I18NBundle langStr;
-    private Skin comicSkin = new Skin(Gdx.files.internal("skin/comic-ui.json"));
-    private TextButton rollButton = new TextButton("Roll dice", comicSkin);
-    private enum playerType {NONE, HUMAN, AI_DUMB, AI_SAFE, AI_EVIL};
+    private int currentPlayer=0, nextPlayer=1, framePerThrow =0, fromField, targetField;
+    private Vector3 touchPoint = new Vector3();
+    private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));;
+    private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
+    private TextButton rollButton = new TextButton(langStr.get("roll"), uiSkin);
+    private TextButton backButton = new TextButton(langStr.get("back"), uiSkin);
     private int [] home = new int[playersCount];
     private boolean rollAgain = false, gameOver = false, turnOver = true, nasazeni = false, move = false, rollBtnPressed = false, goToHomeN = false, goToHomeF = false;
-    private Piece movingPiece = null;
-    private int nextField, dice = 0;
+    private com.jerabek.clovece.Piece movingPiece = null;
+    private int nextField, dice = 0, BACK = 1, action= 0;
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
-    private Texture woodTexture = new Texture("wood.png"), deska = new Texture("deskaq.png") , pieceMark;
+    private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png") , pieceMark;
     private boolean playerSelectedPiece = false, diceRolled = false;
     private String sixString, totalStr;
-    private String playerStr, blueStr, redStr, yellowStr, greenStr, winStr, onTurnStr, threwStr;
+    private String playerStr, blueStr, redStr, yellowStr, greenStr, winStr, onTurnStr, threwStr, rollStr;
+
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
-        langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));
         playerStr = langStr.get("player");
         blueStr = langStr.get("blue");
         redStr = langStr.get("red");
@@ -100,13 +90,12 @@ public class PlayState extends State {
         threwStr = " " + langStr.get("threw");
         sixString = langStr.get("six");
         totalStr = langStr.get("total");
+
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
         stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
-
         Gdx.input.setInputProcessor(stage);
 
-//      dice = new Texture("dice.png");
-        pieceMark = new Texture("pieceMark.png");
+        pieceMark = new Texture("gameImage/pieceMark.png");
 
         segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
         segoe96Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
@@ -124,18 +113,18 @@ public class PlayState extends State {
         fontStyle48 = new LabelStyle(segoe48Font, Color.BLACK);
         fontStyle36 = new LabelStyle(segoe36Font, Color.BLACK);
 
-        fieldImg[0] = new Texture("pole.png");
-        fieldImg[1] = new Texture("poleB.png"); // 1c78ff
-        fieldImg[2] = new Texture("poleY.png"); // ffcc00
-        fieldImg[3] = new Texture("poleR.png"); // e63434
-        fieldImg[4] = new Texture("poleG.png"); // 23c923
+        fieldImg[0] = new Texture("gameImage/pole.png");
+        fieldImg[1] = new Texture("gameImage/poleB.png"); // 1c78ff
+        fieldImg[2] = new Texture("gameImage/poleY.png"); // ffcc00
+        fieldImg[3] = new Texture("gameImage/poleR.png"); // e63434
+        fieldImg[4] = new Texture("gameImage/poleG.png"); // 23c923
         for(int a=0; a < fieldImg.length; a++) {
             fieldImg[a].setFilter(TextureFilter.Linear, TextureFilter.Linear);
         }
         //nastav kameny
         for(int a=0; a < playersCount; a++){
             for(int b=0; b < pieceCount; b++){
-                piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
+                piece[a*4+b] = new com.jerabek.clovece.Piece(data[40+a*8+b].getX(),
                                          data[40+a*8+b].getY(),
                                          a*4+b,
                                          a,
@@ -146,17 +135,16 @@ public class PlayState extends State {
 
         //nastav hráče
         //for(int a=0; a < playersCount; a++){
-            player[0] = new Player(playerStr, 0, 0, 0);
-            player[1] = new Player(yellowStr, 1, 0, 0);
-            player[2] = new Player(redStr, 1, 0, 0);
-            player[3] = new Player(greenStr, 1, 0, 0);
+            player[0] = new com.jerabek.clovece.Player(playerStr, 0, 0, 0);
+            player[1] = new com.jerabek.clovece.Player(yellowStr, 1, 0, 0);
+            player[2] = new com.jerabek.clovece.Player(redStr, 1, 0, 0);
+            player[3] = new com.jerabek.clovece.Player(greenStr, 1, 0, 0);
         //}
 
         label();
         rollButton();
+        backButton();
         statsLabels();
-
-        touchPoint = new Vector3();
     }
 
     public void getPieceByXY(float x, float y){
@@ -187,6 +175,7 @@ public class PlayState extends State {
     @Override
     public void update(float dt) {
         checkWin();
+        if(action==1) gsm.push(new MenuState(gsm));
         if(!gameOver) {
             if ( framePerThrow > 40 || player[currentPlayer].getAi()==0 ) {
                 if ( turnOver ) {
@@ -322,8 +311,7 @@ public class PlayState extends State {
             fromField -= 1;
             if (fromField < 0){ fromField = 39; }
 
-        }
-        else { // nasadit
+        } else { // nasadit
             int targetField = 10+currentPlayer*10;
             if(targetField==40) targetField = 0;//pro posledniho hrace
 
@@ -334,13 +322,10 @@ public class PlayState extends State {
             movingPiece.setPosition(data[targetField].getX(), data[targetField].getY());
             data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
             data[fromField].setPieceID(-1);//vynuluj starej
-//            nasazeni = false;
-
         }
     }
 
     private void startMove() {
-
         if(movingProgress == 1) {
             dice--;
             movingProgress = 0;
@@ -410,8 +395,10 @@ public class PlayState extends State {
             if(piece[i].getPlayer()==currentPlayer) { // vymazat
                 //pro normalni posun po ploše
                 if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
-                    int targetPiece = data[pieceField + dice].getPieceID();
-                    if(targetPiece > 39) targetPiece -= 40;
+                    targetField = pieceField + dice;
+                    if(targetField > 39) targetField -= 40;
+                    int targetPiece = data[targetField].getPieceID();
+
                     if(targetPiece == -1) {
                         movablePieces.add(piece[i].getPieceId());
                     }else{
@@ -470,7 +457,7 @@ public class PlayState extends State {
     }
 
     private void paintPieces(SpriteBatch sb){
-        Piece[] pieceSort;
+        com.jerabek.clovece.Piece[] pieceSort;
         pieceSort = piece.clone();
 
         //seřazení pro odstranení překryvů
@@ -480,7 +467,7 @@ public class PlayState extends State {
             {
                 if (pieceSort[i].getY() > pieceSort[j].getY())
                 {
-                    Piece temp = pieceSort[i];
+                    com.jerabek.clovece.Piece temp = pieceSort[i];
                     pieceSort[i] = pieceSort[j];
                     pieceSort[j] = temp;
                 }
@@ -497,17 +484,15 @@ public class PlayState extends State {
         }
 
         //vykresli figurky
-        for(Piece pieces : pieceSort) {
+        for(com.jerabek.clovece.Piece pieces : pieceSort) {
             sb.draw(pieces.getTexture(),
                     cam.position.x + pieces.getX() * zoom - pieceSize * 0.5f,
                     cam.position.y + pieces.getY() * zoom - pieceSize * 0.4f);
         }
-
-
     }
 
     private void refreshBoard(SpriteBatch sb) {
-        for (GameField aData : data) {
+        for (com.jerabek.clovece.GameField aData : data) {
 //            aData.getField();
 //            aData.getColor();
 
@@ -549,10 +534,29 @@ public class PlayState extends State {
         outputLabel.setText(player[currentPlayer].getName() + onTurnStr);
     }
 
+    private void backButton(){
+        backButton.setSize(250,150);
+        backButton.setPosition(cam.position.x - rollButton.getWidth() - 20, cam.position.y - 8 * zoom + 20);
+        backButton.getLabel().setFontScale(1.2f);
+        backButton.addListener(new InputListener(){
+            @Override
+            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+//              outputLabel.setText("Player" + nextPlayer +" is on turn");
+                saveGame();
+                action = BACK;
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+        stage.addActor(backButton);
+    }
+
     public void rollButton(){
         rollButton.setSize(500,150);
         rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 8 * zoom + 20);
-        rollButton.getLabel().setFontScale(2,2);
+        rollButton.getLabel().setFontScale(1.5f);
         rollButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
@@ -653,7 +657,7 @@ public class PlayState extends State {
         for(int i = 0; i < data.length; i++)
             fieldImg[i].dispose();
 
-        for (Piece aPiece : piece) aPiece.dispose();
+        for (com.jerabek.clovece.Piece aPiece : piece) aPiece.dispose();
 
         segoe96Texture.dispose();
         segoe96Font.dispose();
