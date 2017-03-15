@@ -2,6 +2,7 @@ package com.jerabek.clovece;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -37,7 +38,7 @@ public class MenuState extends State{
     private Label.LabelStyle fontStyle96, fontStyle48;
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton newGameButton = new TextButton(langStr.get("newGame"), uiSkin);
-    private TextButton resumeButton = new TextButton(langStr.get("resumeGame"), uiSkin);
+    private TextButton resumeButton = new TextButton(/* langStr.get("resumeGame") */ "ěščřžýáíé", uiSkin);
     private TextButton quitButton = new TextButton(langStr.get("quitGame"), uiSkin);
     private TextButton helpButton = new TextButton(langStr.get("gameRules"), uiSkin);
     private TextButton okHelpButton = new TextButton(langStr.get("ok"), uiSkin);
@@ -62,6 +63,9 @@ public class MenuState extends State{
 
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
         fontStyle48 = new Label.LabelStyle(segoe48Font, Color.BLACK);
+
+
+
         logoLabel = new Label(langStr.get("gameName"),fontStyle96);
         helpLabel = new Label(langStr.get("help"),fontStyle48);
 
@@ -216,7 +220,7 @@ public class MenuState extends State{
         sb.begin();
 
         sb.draw(woodTexture, -1080, 0, 2160, 2100, 0, 0, 1, 1);
-        sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 500, 288, 288);
+        sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 400, 288, 288);
 //        labelContainer.draw(sb, 0.5f);
         sb.end();
         stage.act();
