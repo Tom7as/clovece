@@ -34,7 +34,7 @@ public class SettingState extends State{
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton backButton = new TextButton(langStr.get("back"), uiSkin);
     private TextButton rulesButton = new TextButton(langStr.get("rules"), uiSkin);
-    private TextButton okRulesButton = new TextButton("ok", uiSkin);
+    private TextButton okRulesButton = new TextButton(langStr.get("ok"), uiSkin);
     private TextButton playButton = new TextButton(langStr.get("play"), uiSkin);
     private Stage stage;
     private int BACK = 1, RULES = 2, START = 3, action, rulesSlide = 0, rulesOpened=1;
@@ -158,8 +158,8 @@ public class SettingState extends State{
                     action = 0;
                     rulesOpened = 1;
                 }else {
-                    cam.position.y -= 12 * rulesOpened;
-                    rulesSlide += 12 * rulesOpened;
+                    cam.position.y -= 18 * rulesOpened;
+                    rulesSlide += 18 * rulesOpened;
                 }
                 break;
             case 3:

@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -30,17 +31,18 @@ import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
 public class MenuState extends State{
     private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"), "UTF-8");
-    private Texture segoe96Texture;
-    private BitmapFont segoe96Font;
-    private Label logoLabel;
-    private Label.LabelStyle fontStyle96;
+    private Texture segoe96Texture, segoe48Texture;
+    private BitmapFont segoe96Font, segoe48Font;
+    private Label logoLabel, helpLabel;
+    private Label.LabelStyle fontStyle96, fontStyle48;
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton newGameButton = new TextButton(langStr.get("newGame"), uiSkin);
     private TextButton resumeButton = new TextButton(langStr.get("resumeGame"), uiSkin);
     private TextButton quitButton = new TextButton(langStr.get("quitGame"), uiSkin);
     private TextButton helpButton = new TextButton(langStr.get("gameRules"), uiSkin);
+    private TextButton okHelpButton = new TextButton(langStr.get("ok"), uiSkin);
     private Stage stage;
-    private int NEW_GAME = 1, RESUME = 2, QUIT = 3, HELP = 4, action;
+    private int NEW_GAME = 1, RESUME = 2, QUIT = 3, HELP = 4, action, helpOpened = 1, helpSlide = 0;
     private Texture woodTexture = new Texture("gameImage/wood.png"), logoImage = new Texture("logo.png");
 
     public MenuState(GameStateManager gsm) {
@@ -53,22 +55,40 @@ public class MenuState extends State{
         segoe96Font = new BitmapFont(Gdx.files.internal("font/segoe96.fnt"), new TextureRegion(segoe96Texture), false);
         segoe96Font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.MipMapNearestLinear);
 
+        segoe48Texture = new Texture(Gdx.files.internal("font/segoe48.png"), false);
+        segoe48Texture.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
+        segoe48Font = new BitmapFont(Gdx.files.internal("font/segoe48.fnt"), new TextureRegion(segoe48Texture), false);
+        segoe48Font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.MipMapNearestLinear);
+
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
+        fontStyle48 = new Label.LabelStyle(segoe48Font, Color.BLACK);
         logoLabel = new Label(langStr.get("gameName"),fontStyle96);
-        Gdx.input.setCatchBackKey(true);
+        helpLabel = new Label(langStr.get("help"),fontStyle48);
+
+//        Gdx.input.setCatchBackKey(true);
         logoLabel();
+        helpLabel();
         newGameButton();
         resumeButton();
         helpButton();
         quitButton();
+        okHelpButton();
+
     }
 
     private void logoLabel(){
         logoLabel.setSize(stage.getWidth(),120);
-        logoLabel.setPosition(cam.position.x - logoLabel.getWidth() /2 , cam.position.y + 350);
+        logoLabel.setPosition(cam.position.x - logoLabel.getWidth() /2 , cam.position.y + 250);
         logoLabel.setAlignment(Align.center);
         logoLabel.setFontScale(1.5f);
         stage.addActor(logoLabel);
+    }
+    private void helpLabel(){
+        helpLabel.setSize(980,800);
+        helpLabel.setWrap(true);
+        helpLabel.setPosition(-1030, cam.position.y - 150);
+        helpLabel.setAlignment(Align.topLeft);
+        stage.addActor(helpLabel);
     }
     private void newGameButton(){
         newGameButton.setSize(600,150);
@@ -121,6 +141,23 @@ public class MenuState extends State{
         });
         stage.addActor(helpButton);
     }
+    private void okHelpButton(){
+        okHelpButton.setSize(400,150);
+        okHelpButton.setPosition(cam.position.x - okHelpButton.getWidth() / 2 - 1080, cam.position.y - 700);
+        okHelpButton.getLabel().setFontScale(1.5f);
+        okHelpButton.addListener(new InputListener(){
+            @Override
+            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+//              outputLabel.setText("Player" + nextPlayer +" is on turn");
+                action = HELP;
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+        stage.addActor(okHelpButton);
+    }
     private void quitButton(){
         quitButton.setSize(600,150);
         quitButton.setPosition(cam.position.x - quitButton.getWidth() / 2, cam.position.y - 600);
@@ -139,6 +176,7 @@ public class MenuState extends State{
         stage.addActor(quitButton);
     }
 
+
     @Override
     protected void handleInput() {
 
@@ -153,6 +191,16 @@ public class MenuState extends State{
             case 2:
                 break;
             case 4:
+                if(helpSlide>1080 && helpOpened == 1){
+                    action = 0;
+                    helpOpened = -1;
+                }else if (helpSlide <= 0 && helpOpened == -1){
+                    action = 0;
+                    helpOpened = 1;
+                }else {
+                    cam.position.x -= 12 * helpOpened;
+                    helpSlide += 12 * helpOpened;
+                }
                 break;
             case 3:
                 Gdx.app.exit();
@@ -167,9 +215,9 @@ public class MenuState extends State{
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, 0, 0, 1080, 2100, 0, 0, 1, 1);
-        sb.draw(logoImage, cam.position.x - logoImage.getWidth() , cam.position.y + 500, 288, 288);
-
+        sb.draw(woodTexture, -1080, 0, 2160, 2100, 0, 0, 1, 1);
+        sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 500, 288, 288);
+//        labelContainer.draw(sb, 0.5f);
         sb.end();
         stage.act();
         stage.draw();

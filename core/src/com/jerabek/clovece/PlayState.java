@@ -3,6 +3,7 @@ package com.jerabek.clovece;
 
 import com.badlogic.gdx.Gdx;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 
@@ -175,7 +176,12 @@ public class PlayState extends State {
     @Override
     public void update(float dt) {
         checkWin();
-        if(action==1) gsm.push(new MenuState(gsm));
+        if(action==1) {
+
+            //gsm.push(new MenuState(gsm));
+
+        }
+
         if(!gameOver) {
             if ( framePerThrow > 40 || player[currentPlayer].getAi()==0 ) {
                 if ( turnOver ) {
@@ -228,6 +234,10 @@ public class PlayState extends State {
     //        else {
     //        showRestartButton...
 //          }
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+            saveGame();
+            action = BACK;
         }
     }
 
