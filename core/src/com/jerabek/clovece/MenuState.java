@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -22,6 +24,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
+import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
 import static com.jerabek.clovece.CloveceNezlobSe.appHeight;
 import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
@@ -31,6 +34,9 @@ import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
 
 public class MenuState extends State{
+
+    ShapeRenderer shapeRenderer;
+    private final int worldHalfHeight;
     private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"), "UTF-8");
     private Texture segoe96Texture, segoe48Texture;
     private BitmapFont segoe96Font, segoe48Font;
@@ -48,9 +54,11 @@ public class MenuState extends State{
 
     public MenuState(GameStateManager gsm) {
         super(gsm);
+        shapeRenderer = new ShapeRenderer();
         stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
         Gdx.input.setInputProcessor(stage);
-
+        worldHalfHeight = (int) stage.getViewport().getWorldHeight() / 2;
+        woodTexture.setWrap(Repeat, Repeat);
         segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
         segoe96Texture.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
         segoe96Font = new BitmapFont(Gdx.files.internal("font/segoe96.fnt"), new TextureRegion(segoe96Texture), false);
@@ -190,7 +198,7 @@ public class MenuState extends State{
     public void update(float dt) {
         switch(action){
             case 1:
-                gsm.push(new SettingState(gsm));
+                gsm.set(new SettingState(gsm));
                 break;
             case 2:
                 break;
@@ -208,10 +216,12 @@ public class MenuState extends State{
                 break;
             case 3:
                 Gdx.app.exit();
+                System.exit(0);
                 break;
             default:
                 break;
         }
+        if(Gdx.input.justTouched()) Gdx.app.exit();
     }
 
     @Override
@@ -219,16 +229,30 @@ public class MenuState extends State{
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, -1080, 0, 2160, 2100, 0, 0, 1, 1);
+        sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
         sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 400, 288, 288);
-//        labelContainer.draw(sb, 0.5f);
         sb.end();
+
+        shapeRenderer.setProjectionMatrix(cam.combined);
+        shapeRenderer.setColor(0.8f, 0.86f, 0.89f, 1);
+        shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.rect(-1060, cam.position.y - 470, 1010,1140);
+        shapeRenderer.end();
+
+//        helpLabel.setSize(980,800);
+//        helpLabel.setWrap(true);
+//        helpLabel.setPosition(-1030, cam.position.y - 150);
+
         stage.act();
         stage.draw();
     }
 
     @Override
     public void dispose() {
-
+        segoe96Texture.dispose();
+        segoe96Font.dispose();
+        segoe48Texture.dispose();
+        segoe48Font.dispose();
+        logoImage.dispose();
     }
 }

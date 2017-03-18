@@ -3,6 +3,7 @@ package com.jerabek.clovece;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -20,6 +22,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
+import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
 import static com.jerabek.clovece.CloveceNezlobSe.appHeight;
 import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
@@ -34,10 +37,10 @@ public class SettingState extends State{
     private BitmapFont segoe96Font, segoe36Font ;
     private Label settingLabel, space;
     private Label.LabelStyle fontStyle96, fontStyle36;
-    private ImageTextButton radioButton;
+    private CheckBox radioButton;
     private TextField player0Name, player1Name, player2Name, player3Name;
-    private ButtonGroup buttonGroup0, buttonGroup1, buttonGroup2, buttonGroup3;
-    private Table table;
+    private ButtonGroup<CheckBox> buttonGroup0, buttonGroup1, buttonGroup2, buttonGroup3;
+    private Table table, table2;
     private Skin uiSkin2 = new Skin(Gdx.files.internal("skin/flatearthui/flat-earth-ui.json"));
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton backButton = new TextButton(langStr.get("back"), uiSkin);
@@ -56,18 +59,23 @@ public class SettingState extends State{
         Gdx.input.setInputProcessor(stage);
         worldHalfHeight = (int) stage.getViewport().getWorldHeight() / 2;
         segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
-        segoe96Texture.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
+        segoe96Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
         segoe96Font = new BitmapFont(Gdx.files.internal("font/segoe96.fnt"), new TextureRegion(segoe96Texture), false);
-        segoe96Font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.MipMapNearestLinear);
+        segoe96Font.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.MipMapNearestLinear);
 
         segoe36Texture = new Texture(Gdx.files.internal("font/segoe36.png"), false);
-        segoe36Texture.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
+        segoe36Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
         segoe36Font = new BitmapFont(Gdx.files.internal("font/segoe36.fnt"), new TextureRegion(segoe36Texture), false);
-        segoe36Font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.MipMapNearestLinear);
+        segoe36Font.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.MipMapNearestLinear);
 
+        segoe36Font.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        segoe36Font.getData().setScale(0.5f);
         fontStyle36 = new Label.LabelStyle(segoe36Font, Color.BLACK);
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
         settingLabel = new Label(langStr.get("settings"),fontStyle96);
+
+        woodTexture.setWrap(Repeat, Repeat);
+
 //// TODO: 15.03.2017 sehnat HD skin - udelat, srovnat settings
 //// TODO:            přidat reklamu , repeat textury nebo barvu
         backButton();
@@ -76,145 +84,8 @@ public class SettingState extends State{
         playButton();
         settingLabel();
 
-        table = new Table();
-        //table.setFillParent(true);
-        table.left().top();
-        stage.addActor(table);
-        table.setClip(true);
-        //table.setDebug(true);
-        table.setSize(260, 260);
-        table.scaleBy(2f);
-        table.setPosition(60, cam.position.y - 480);
-
-        buttonGroup0 = new ButtonGroup();
-        buttonGroup1 = new ButtonGroup();
-        buttonGroup2 = new ButtonGroup();
-        buttonGroup3 = new ButtonGroup();
-
-        //hrac 0
-        table.row().height(10);
-            Label nameLabel = new Label(langStr.get("blue") + " " + langStr.get("player"), fontStyle36);
-            table.add(nameLabel).width(100).height(30);
-            Label playerType = new Label(langStr.get("off"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-            playerType = new Label(langStr.get("human"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(60).height(30);
-            playerType = new Label(langStr.get("computer"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-        table.row().height(10);
-            player0Name = new TextField(langStr.get("name"), uiSkin2);
-            table.add(player0Name).width(100).height(25);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("0");
-            table.add(radioButton).width(50);
-            buttonGroup0.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("1");
-            radioButton.toggle();
-            table.add(radioButton).width(60);
-            buttonGroup0.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("2");
-            table.add(radioButton).width(50);
-            buttonGroup0.add(radioButton);
-        table.row().height(12);
-                space = new Label("", uiSkin2);
-                table.add(space);
-        //1player
-        table.row().height(10);
-            nameLabel = new Label(langStr.get("yellow") + " " + langStr.get("player"), fontStyle36);
-            table.add(nameLabel).width(100).height(30);
-            playerType = new Label(langStr.get("off"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-            playerType = new Label(langStr.get("human"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(60).height(30);
-            playerType = new Label(langStr.get("computer"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-        table.row().height(10);
-            player1Name = new TextField(langStr.get("name"), uiSkin2);
-            table.add(player1Name).width(100).height(25);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("0");
-            table.add(radioButton).width(50);
-            buttonGroup1.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("1");
-            table.add(radioButton).width(60);
-            buttonGroup1.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("2");
-            radioButton.toggle();
-            table.add(radioButton).width(50);
-            buttonGroup1.add(radioButton);
-        table.row().height(12);
-                table.add(space);
-        //2player
-        table.row().height(10);
-             nameLabel = new Label(langStr.get("red") + " " + langStr.get("player"), fontStyle36);
-            table.add(nameLabel).width(100).height(30);
-            playerType = new Label(langStr.get("off"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-            playerType = new Label(langStr.get("human"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(60).height(30);
-            playerType = new Label(langStr.get("computer"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-        table.row().height(10);
-            player2Name = new TextField(langStr.get("name"), uiSkin2);
-            table.add(player2Name).width(100).height(25);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("0");
-            table.add(radioButton).width(50);
-            buttonGroup2.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("1");
-            table.add(radioButton).width(60);
-            buttonGroup2.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("2");
-            radioButton.toggle();
-            table.add(radioButton).width(50);
-            buttonGroup2.add(radioButton);
-        table.row().height(12);
-                table.add(space);
-        //3player
-        table.row().height(10);
-            nameLabel = new Label(langStr.get("green") + " " + langStr.get("player"), uiSkin2);
-            table.add(nameLabel).width(100).height(30);
-            playerType = new Label(langStr.get("off"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-            playerType = new Label(langStr.get("human"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(60).height(30);
-            playerType = new Label(langStr.get("computer"), fontStyle36);
-            playerType.setAlignment(Align.center);
-            table.add(playerType).width(50).height(30);
-        table.row().height(10);
-            player3Name = new TextField(langStr.get("name"), uiSkin2);
-            table.add(player3Name).width(100).height(25);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("0");
-            radioButton.toggle();
-            table.add(radioButton).width(50);
-            buttonGroup3.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("1");
-            table.add(radioButton).width(60);
-            buttonGroup3.add(radioButton);
-            radioButton = new ImageTextButton("",uiSkin2, "radio");
-            radioButton.setName("2");
-            table.add(radioButton).width(50);
-            buttonGroup3.add(radioButton);
-
+        playersSettings();
+        rulesSettings();
 
 //        ImageTextButton imageTextButton = new ImageTextButton("Flat", skin, "radio");
 //        buttonGroup.add(imageTextButton);
@@ -232,6 +103,177 @@ public class SettingState extends State{
 
     }
 
+    private void rulesSettings() {
+        table2 = new Table();
+        //table.setFillParent(true);
+        table2.left().top();
+        stage.addActor(table2);
+        table2.setClip(true);
+        table2.setDebug(false);
+        table2.setSize(330, 330);
+        table2.scaleBy(2f);
+        table2.setPosition( 390 - table2.getWidth(), -worldHalfHeight - table2.getHeight() - 180);
+
+        table2.add().width(10);
+
+        radioButton = new CheckBox("",uiSkin);
+        radioButton.setName("0");
+        table2.add(radioButton).width(30).height(50);
+        table2.add(new Label(langStr.get("Throw3Time"), fontStyle36)).height(50);
+        table2.row();
+
+        table2.add().width(10);
+
+        radioButton = new CheckBox("",uiSkin);
+        radioButton.setName("0");
+        radioButton.toggle();
+        table2.add(radioButton).width(30).height(50);
+        table2.add(new Label(langStr.get("6ThrowAgain"), fontStyle36)).height(50);
+        table2.row();
+
+    }
+
+    private void playersSettings() {
+        table = new Table();
+        //table.setFillParent(true);
+        table.left().top();
+        stage.addActor(table);
+        table.setClip(true);
+        table.setDebug(false);
+        table.setSize(330, 330);
+        table.scaleBy(2f);
+        table.setPosition( 390 - table.getWidth(), worldHalfHeight - table.getHeight() - 180);
+
+        buttonGroup0 = new ButtonGroup<CheckBox>();
+        buttonGroup1 = new ButtonGroup<CheckBox>();
+        buttonGroup2 = new ButtonGroup<CheckBox>();
+        buttonGroup3 = new ButtonGroup<CheckBox>();
+
+        //hrac 0
+        table.row().height(10);
+        Label nameLabel = new Label(langStr.get("blue") + " " + langStr.get("player"), fontStyle36);
+        table.add(nameLabel).width(140).height(30);
+        Label playerType = new Label(langStr.get("off"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("human"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("computer"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        table.row();
+        player0Name = new TextField(langStr.get("name"), uiSkin);
+        table.add(player0Name).width(130).height(40).left();
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("0");
+        table.add(radioButton).width(60).height(40);
+        buttonGroup0.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("1");
+        radioButton.toggle();
+        table.add(radioButton).width(70).height(40);
+        buttonGroup0.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("2");
+        table.add(radioButton).width(60).height(40);
+        buttonGroup0.add(radioButton);
+        table.row().height(12);
+        space = new Label("", uiSkin);
+        table.add(space);
+        //1player
+        table.row().height(10);
+        nameLabel = new Label(langStr.get("yellow") + " " + langStr.get("player"), fontStyle36);
+        table.add(nameLabel).width(140).height(30);
+        playerType = new Label(langStr.get("off"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("human"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("computer"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        table.row();
+        player1Name = new TextField(langStr.get("name"), uiSkin);
+        table.add(player1Name).width(130).height(40).left();
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("0");
+        table.add(radioButton).width(60).height(40);
+        buttonGroup1.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("1");
+        table.add(radioButton).width(70).height(40);
+        buttonGroup1.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("2");
+        radioButton.toggle();
+        table.add(radioButton).width(60).height(40);
+        buttonGroup1.add(radioButton);
+        table.row().height(12);
+        table.add(space);
+        //2player
+        table.row().height(10);
+        nameLabel = new Label(langStr.get("red") + " " + langStr.get("player"), fontStyle36);
+        table.add(nameLabel).width(140).height(30);
+        playerType = new Label(langStr.get("off"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("human"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("computer"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        table.row();
+        player2Name = new TextField(langStr.get("name"), uiSkin);
+        table.add(player2Name).width(130).height(40).left();
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("0");
+        table.add(radioButton).width(60).height(40);
+        buttonGroup2.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("1");
+        table.add(radioButton).width(70).height(40);
+        buttonGroup2.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("2");
+        radioButton.toggle();
+        table.add(radioButton).width(60).height(40);
+        buttonGroup2.add(radioButton);
+        table.row().height(12);
+        table.add(space);
+        //3player
+        table.row().height(10);
+        nameLabel = new Label(langStr.get("green") + " " + langStr.get("player"), fontStyle36);
+        table.add(nameLabel).width(140).height(30);
+        playerType = new Label(langStr.get("off"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("human"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        playerType = new Label(langStr.get("computer"), fontStyle36);
+        playerType.setAlignment(Align.center);
+        table.add(playerType).width(60).height(30);
+        table.row();
+        player3Name = new TextField(langStr.get("name"), uiSkin);
+        table.add(player3Name).width(130).height(40).left();
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("0");
+        radioButton.toggle();
+        table.add(radioButton).width(60).height(40);
+        buttonGroup3.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("1");
+        table.add(radioButton).width(70).height(40);
+        buttonGroup3.add(radioButton);
+        radioButton = new CheckBox("",uiSkin, "radio");
+        radioButton.setName("2");
+        table.add(radioButton).width(60).height(40);
+        buttonGroup3.add(radioButton);
+    }
+
     private void settingLabel(){
         settingLabel.setSize(stage.getWidth(),120);
         settingLabel.setPosition(cam.position.x - settingLabel.getWidth() / 2 , cam.position.y + 580);
@@ -239,6 +281,7 @@ public class SettingState extends State{
         settingLabel.setFontScale(1f);
         stage.addActor(settingLabel);
     }
+
     private void backButton(){
         backButton.setSize(300,150);
         backButton.setPosition(cam.position.x - backButton.getWidth() / 2 - 350, cam.position.y - 700);
@@ -275,12 +318,11 @@ public class SettingState extends State{
     }
     private void okRulesButton(){
         okRulesButton.setSize(300,150);
-        okRulesButton.setPosition(cam.position.x - okRulesButton.getWidth() / 2, cam.position.y - 2700);
+        okRulesButton.setPosition(540 - okRulesButton.getWidth() / 2, -worldHalfHeight - 700 );
         okRulesButton.getLabel().setFontScale(fontScale);
         okRulesButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-//              outputLabel.setText("Player" + nextPlayer +" is on turn");
                 action = RULES;
             }
             @Override
@@ -318,10 +360,10 @@ public class SettingState extends State{
 
         switch(action){
             case 1:
-                gsm.push(new MenuState(gsm));
+                gsm.set(new MenuState(gsm));
                 break;
             case 2:
-                if(rulesSlide>2000 && rulesOpened == 1){
+                if(rulesSlide>worldHalfHeight*2 && rulesOpened == 1){
                     action = 0;
                     rulesOpened = -1;
                 }else if (rulesSlide <= 0 && rulesOpened == -1){
@@ -333,7 +375,7 @@ public class SettingState extends State{
                 }
                 break;
             case 3:
-                gsm.push(new PlayState(gsm, saveSetting()));
+                gsm.set(new PlayState(gsm, saveSetting()));
                 break;
             default:
                 break;
@@ -384,9 +426,9 @@ public class SettingState extends State{
     public void render(SpriteBatch sb) {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
+        sb.draw(woodTexture, 0, -worldHalfHeight * 2.5f, 1080, worldHalfHeight * 5);
 
-        sb.draw(woodTexture, 0, worldHalfHeight * (-2), 1080, worldHalfHeight * 4, 0, 0, 1, 1);
-        sb.draw(deska, 540, worldHalfHeight - deska.getHeight(),
+        sb.draw(deska, 540,worldHalfHeight - deska.getHeight(),
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, 540,worldHalfHeight,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
@@ -395,6 +437,17 @@ public class SettingState extends State{
         sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
 
+
+        sb.draw(deska, 540,-worldHalfHeight - deska.getHeight() ,
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
+        sb.draw(deska, 540,-worldHalfHeight,
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
+        sb.draw(deska, 540 - deska.getWidth(), -worldHalfHeight  - deska.getHeight(),
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
+        sb.draw(deska, 540 - deska.getWidth() , -worldHalfHeight,
+                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
+
+
         sb.end();
         stage.act();
         stage.draw();
@@ -402,6 +455,12 @@ public class SettingState extends State{
 
     @Override
     public void dispose() {
-
+        stage.dispose();
+        woodTexture.dispose();
+        deska.dispose();
+        segoe96Texture.dispose();
+        segoe96Font.dispose();
+        segoe36Texture.dispose();
+        segoe36Font.dispose();
     }
 }

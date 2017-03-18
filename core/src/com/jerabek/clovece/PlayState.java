@@ -34,6 +34,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
 import static com.badlogic.gdx.math.MathUtils.random;
 import static com.badlogic.gdx.math.MathUtils.round;
 import static com.jerabek.clovece.CloveceNezlobSe.*;
@@ -96,7 +97,7 @@ public class PlayState extends State {
         stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
         Gdx.input.setInputProcessor(stage);
         worldHalfHeight = (int) stage.getViewport().getWorldHeight() / 2;
-        
+        woodTexture.setWrap(Repeat, Repeat);
         pieceMark = new Texture("gameImage/pieceMark.png");
 
         segoe96Texture = new Texture(Gdx.files.internal("font/segoe96.png"), false);
@@ -190,7 +191,7 @@ public class PlayState extends State {
         checkWin();
         if(action==1) {
 
-            gsm.push(new MenuState(gsm));
+            gsm.set(new MenuState(gsm));
 
         }
 
@@ -257,9 +258,9 @@ public class PlayState extends State {
             action = BACK;
         }
         //ads section
-        time++;
-        if(time>=180 * 3 /* 000 */) action = ADS;
-        if(action==ADS) adsTime();
+//        time++;
+//        if(time>=180 * 3 /* 000 */) action = ADS;
+//        if(action==ADS) adsTime();
 
     }
 
@@ -279,7 +280,7 @@ public class PlayState extends State {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, -1080, 0, 300, 300, 0, 0, 8, 5);
+        sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
         sb.draw(deska, 540, worldHalfHeight - deska.getHeight(),
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, 540,worldHalfHeight,
@@ -757,18 +758,17 @@ public class PlayState extends State {
 
     @Override
     public void dispose() {
-
-        for(int i = 0; i < data.length; i++)
-            fieldImg[i].dispose();
-
+        for (Texture afieldImg : fieldImg) afieldImg.dispose();
         for (Piece aPiece : piece) aPiece.dispose();
-
+        woodTexture.dispose();
+        deska.dispose();
         segoe96Texture.dispose();
         segoe96Font.dispose();
         segoe48Texture.dispose();
         segoe48Font.dispose();
         segoe36Texture.dispose();
         segoe36Font.dispose();
+        stage.dispose();
         System.out.println("Board Disposed");
     }
 
