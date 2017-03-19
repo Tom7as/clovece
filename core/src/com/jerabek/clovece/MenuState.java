@@ -13,19 +13,14 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
-import static com.jerabek.clovece.CloveceNezlobSe.appHeight;
 import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
 /**
@@ -55,7 +50,7 @@ public class MenuState extends State{
     public MenuState(GameStateManager gsm) {
         super(gsm);
         shapeRenderer = new ShapeRenderer();
-        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
+        stage = new Stage(new ExtendViewport(appWidth,1440,appWidth,1920, cam));
         Gdx.input.setInputProcessor(stage);
         worldHalfHeight = (int) stage.getViewport().getWorldHeight() / 2;
         woodTexture.setWrap(Repeat, Repeat);
@@ -234,7 +229,13 @@ public class MenuState extends State{
         sb.end();
 
         shapeRenderer.setProjectionMatrix(cam.combined);
-        shapeRenderer.setColor(0.8f, 0.86f, 0.89f, 1);
+
+        shapeRenderer.setColor(0.49803922f, 0.32941177f, 0.10980392f, 1);
+        shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.rect(-1070, cam.position.y - 480, 1030,1160);
+        shapeRenderer.end();
+
+        shapeRenderer.setColor(0.9411765f, 0.8235294f, 0.6156863f, 1);
         shapeRenderer.begin(ShapeType.Filled);
         shapeRenderer.rect(-1060, cam.position.y - 470, 1010,1140);
         shapeRenderer.end();

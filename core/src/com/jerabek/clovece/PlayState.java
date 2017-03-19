@@ -24,8 +24,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 
 import com.badlogic.gdx.utils.I18NBundle;
@@ -48,7 +51,7 @@ public class PlayState extends State {
     private BitmapFont segoe96Font, segoe48Font, segoe36Font;
 
     private Texture[] fieldImg = new Texture[5];
-    private Stage stage;
+    private Stage stage, stage2;
 
     private LabelStyle fontStyle96, fontStyle48, fontStyle36;
     private Label outputLabel;
@@ -71,18 +74,22 @@ public class PlayState extends State {
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton rollButton = new TextButton(langStr.get("roll"), uiSkin);
     private TextButton backButton = new TextButton(langStr.get("back"), uiSkin);
-    private TextButton okAdsButton = new TextButton(langStr.get("off"), uiSkin);
+    private TextButton yesButton = new TextButton(langStr.get("yes"), uiSkin);
+    private TextButton noButton = new TextButton(langStr.get("no"), uiSkin);
     private int [] home = new int[playersCount];
     private boolean rollAgain = false, gameOver = false, turnOver = true, nasazeni = false, move = false, rollBtnPressed = false, goToHomeN = false, goToHomeF = false;
     private Piece movingPiece = null;
-    private int nextField, dice = 0, BACK = 1, action= 0;
+
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
-    private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png") , pieceMark;
-    private boolean playerSelectedPiece = false, diceRolled = false, onSixAgain, threeSix;
+    private Texture woodTexture = new Texture("gameImage/wood.png"), footerTexture = new Texture("gameImage/footer.png"), deska = new Texture("gameImage/deskaq.png") , pauseMenuTexture = new Texture("gameImage/pauseMenu.png"), pieceMark;
+    private boolean showPauseMenu, playerSelectedPiece = false, diceRolled = false, onSixAgain, threeSix;
     private String sixString, totalStr;
     private String  winStr, onTurnStr, threwStr;
-    private int rollCount = 0, worldHalfHeight, CLOSED = 0, HUMAN = 1, helpOpened = 1, helpSlide = 0, time, ADS = 10;
-
+    private int rollCount = 0, worldHalfHeight, CLOSED = 0, HUMAN = 1, helpOpened = 1, helpSlide = 0, time;
+    private static final int BACK = 1, PLAY = 2, PAUSE = 3, ADS = 10, action= 0;
+    private int nextField, dice = 0, playState = PLAY;
+    private Table tablePause;
+    private Window pauseWindow;
 
     public PlayState(GameStateManager gsm, SettingData settingData) {
         super(gsm);
@@ -94,8 +101,11 @@ public class PlayState extends State {
         totalStr = langStr.get("total");
 
         //cam.setToOrtho(false, appWidth / 2, CloveceNezlobSe.appHeight / 2);
-        stage = new Stage(new ExtendViewport(appWidth,appHeight*1.33f,appWidth,appHeight*1.7f, cam));
+        stage = new Stage(new ExtendViewport(appWidth,1440,appWidth,1920, cam));
+        stage2 = new Stage(new ExtendViewport(appWidth,1440,appWidth,1920, cam));
+
         Gdx.input.setInputProcessor(stage);
+
         worldHalfHeight = (int) stage.getViewport().getWorldHeight() / 2;
         woodTexture.setWrap(Repeat, Repeat);
         pieceMark = new Texture("gameImage/pieceMark.png");
@@ -125,8 +135,12 @@ public class PlayState extends State {
             fieldImg[a].setFilter(TextureFilter.Linear, TextureFilter.Linear);
         }
 
+        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+            saveGame();
+            playState = BACK;
+        }
+        createPauseMenu();
         configGame(settingData);
-        okAdsButton();
         label();
         rollButton();
         backButton();
@@ -196,12 +210,78 @@ public class PlayState extends State {
     @Override
     public void update(float dt) {
         checkWin();
-        if(action==1) {
-
-            gsm.set(new MenuState(gsm));
-
+        switch(playState) {
+            case BACK:
+                gsm.set(new MenuState(gsm));
+                break;
+            case PLAY:
+                Gdx.input.setInputProcessor(stage);
+                playGame(dt);
+                break;
+            case PAUSE:
+                Gdx.input.setInputProcessor(stage2);
+                showPauseMenu = true;
+                break;
+            case ADS:
+//                time++;
+//                if(time>=180 * 3 /* 000 */) action = ADS;
+//                if(action==ADS) adsTime();
+                break;
         }
+    }
 
+    private void createPauseMenu() {
+        tablePause = new Table();
+        tablePause.setSize(400, 466);
+        tablePause.setScale(1.5f);
+        tablePause.setClip(true);
+        tablePause.setPosition(540 - 300, worldHalfHeight - tablePause.getHeight() * 0.75f);
+        stage2.addActor(tablePause);
+
+        tablePause.add(new Label(langStr.get("gamePause"), fontStyle48));
+        tablePause.row();
+
+        tablePause.add(new Label(langStr.get("endGame"), fontStyle36));
+        tablePause.row();
+
+        yesButton.setSize(400,150);
+//        yesButton.setPosition(cam.position.x - yesButton.getWidth() / 2 - 1080, cam.position.y - 700);
+        yesButton.getLabel().setFontScale(1f);
+        yesButton.addListener(new InputListener(){
+            @Override
+            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+                playState = BACK;
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+        tablePause.add(yesButton);
+
+        tablePause.row();
+        tablePause.add(new Label("", uiSkin)).height(50);
+        tablePause.row();
+
+        noButton.setSize(400,150);
+//        noButton.setPosition(540+480 - noButton.getWidth() / 2 - 1080, cam.position.y - 700);
+        noButton.getLabel().setFontScale(1f);
+        noButton.addListener(new InputListener(){
+            @Override
+            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+//              outputLabel.setText("Player" + nextPlayer +" is on turn");
+                playState = PLAY;
+                showPauseMenu = false;
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+        tablePause.add(noButton);
+    }
+
+    private void playGame(float dt) {
         if(!gameOver) {
             if (player[currentPlayer].getAi() == CLOSED) nextPlayer();
             else {
@@ -209,7 +289,6 @@ public class PlayState extends State {
                     if (turnOver) {
                         if (!diceRolled) {
                             if (player[currentPlayer].getAi() == HUMAN) {
-
                                 if (rollBtnPressed) {
                                     rollBtnPressed = false;
                                     diceRolled = true;
@@ -273,23 +352,11 @@ public class PlayState extends State {
                 }
                 framePerThrow++;
             }
-    //        else {
-    //        showRestartButton...
-//          }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
-            saveGame();
-            action = BACK;
-        }
-        //ads section
-//        time++;
-//        if(time>=180 * 3 /* 000 */) action = ADS;
-//        if(action==ADS) adsTime();
-
     }
 
     private boolean noInGamePiece() {
-        int i;
+        int i, x;
         for(i = 0; i < 4; i++) {
             if (piece[i + currentPlayer].getFieldNumber() < 40) {
                 return false;
@@ -298,14 +365,46 @@ public class PlayState extends State {
         return true;
     }
 
+    private int InGamePieceCount() {
+        int i, x = 0;
+        for(i = 0; i < 4; i++) {
+            if (piece[i + currentPlayer].getFieldNumber() < 40) {
+                x++;
+            }
+        }
+        return x;
+    }
+
     private void callAi(int ai) {
         switch(ai){
             case 2:
                 fromField = piece[movablePieces.get(0)].getFieldNumber();
                 playerSelectedPiece = true;
                 break;
-            case 3: break;
+            case 3:
+                fromField = piece[movablePieces.get(0)].getFieldNumber();
+                if(movablePieces.size() == 1 && InGamePieceCount() == 1){
+                    playerSelectedPiece = true;
+                } else {
+                    int [] pieceArrays = new int[movablePieces.size()];
+                    for(int a = 0; a < movablePieces.size(); a++)
+                        pieceArrays[a] = pieceArrays(createFieldArray());
+
+
+                    if(canKickSomeone())
+
+                }
+                break;
             case 4: break;
+        }
+    }
+
+    private void createFieldArray() {
+        int field = fromField;
+        int [] pieceArrays = new int[10];
+        for(int a = 0; a < 10; a++) {
+            if(field == 40) field = 0;
+            pieceArrays[a] = data[field].getPieceID();
         }
     }
 
@@ -315,35 +414,28 @@ public class PlayState extends State {
         sb.begin();
 
         sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
-        sb.draw(deska, 540, worldHalfHeight - deska.getHeight(),
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
-        sb.draw(deska, 540,worldHalfHeight,
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
-        sb.draw(deska, 540 - deska.getWidth(), worldHalfHeight - deska.getHeight(),
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
-        sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight,
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
+        sb.draw(deska, 540, worldHalfHeight - deska.getHeight(), 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
+        sb.draw(deska, 540,worldHalfHeight, 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
+        sb.draw(deska, 540 - deska.getWidth(), worldHalfHeight - deska.getHeight(), 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
+        sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight, 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
+        sb.draw(footerTexture, 0, cam.position.y - 890);
 
         refreshBoard(sb);
         paintPieces(sb);
 
         sb.end();
 
-        stage.act();
-        stage.draw();
-    }
-
-    private void adsTime(){
-        if(helpSlide>1080 && helpOpened == 1){
-            action = 0;
-            time=0;
-            helpOpened = -1;
-        }else if(helpSlide <= 0 && helpOpened == -1){
-            action = 0;
-            helpOpened = 1;
-        }else {
-            cam.position.x -= 12 * helpOpened;
-            helpSlide += 12 * helpOpened;
+        if(showPauseMenu){
+            sb.begin();
+            sb.draw(pauseMenuTexture, 0, worldHalfHeight - pauseMenuTexture.getHeight() / 2);
+            sb.end();
+            tablePause.setVisible(true);
+            stage2.act();
+            stage2.draw();
+        }else{
+            tablePause.setVisible(false);
+            stage.act();
+            stage.draw();
         }
     }
 
@@ -615,14 +707,14 @@ public class PlayState extends State {
 
     private void backButton(){
         backButton.setSize(250,150);
-        backButton.setPosition(cam.position.x - rollButton.getWidth() - 20, cam.position.y - 8 * zoom + 20);
+        backButton.setPosition(cam.position.x - 520, cam.position.y - 8 * zoom + 20);
         backButton.getLabel().setFontScale(1.2f);
         backButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
 //              outputLabel.setText("Player" + nextPlayer +" is on turn");
                 saveGame();
-                action = BACK;
+                playState = PAUSE;
             }
             @Override
             public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
@@ -633,8 +725,8 @@ public class PlayState extends State {
     }
 
     public void rollButton(){
-        rollButton.setSize(500,150);
-        rollButton.setPosition(cam.position.x - rollButton.getWidth() / 2, cam.position.y - 8 * zoom + 20);
+        rollButton.setSize(750,150);
+        rollButton.setPosition(cam.position.x - 250, cam.position.y - 8 * zoom + 20);
         rollButton.getLabel().setFontScale(1.5f);
         rollButton.addListener(new InputListener(){
             @Override
@@ -651,62 +743,16 @@ public class PlayState extends State {
         });
         stage.addActor(rollButton);
     }
-    private void okAdsButton(){
-        okAdsButton.setSize(400,150);
-        okAdsButton.setPosition(cam.position.x - okAdsButton.getWidth() / 2 - 1080, cam.position.y - 700);
-        okAdsButton.getLabel().setFontScale(1.5f);
-        okAdsButton.addListener(new InputListener(){
-            @Override
-            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-//              outputLabel.setText("Player" + nextPlayer +" is on turn");
-                action = 10;
-            }
-            @Override
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-                return true;
-            }
-        });
-        stage.addActor(okAdsButton);
-    }
-//    private void yesBackButton(){
-//        yesBackButton.setSize(400,150);
-//        yesBackButton.setPosition(cam.position.x - yesBackButton.getWidth() / 2 - 1080, cam.position.y - 700);
-//        yesBackButton.getLabel().setFontScale(1.5f);
-//        yesBackButton.addListener(new InputListener(){
-//            @Override
-//            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-////              outputLabel.setText("Player" + nextPlayer +" is on turn");
-//                action = 10;
-//            }
-//            @Override
-//            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-//                return true;
-//            }
-//        });
-//        stage.addActor(yesBackButton);
-//    }
-//    private void noBackButton(){
-//        noBackButton.setSize(400,150);
-//        noBackButton.setPosition(540+480 - noBackButton.getWidth() / 2 - 1080, cam.position.y - 700);
-//        noBackButton.getLabel().setFontScale(1.5f);
-//        noBackButton.addListener(new InputListener(){
-//            @Override
-//            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-////              outputLabel.setText("Player" + nextPlayer +" is on turn");
-//                action = 10;
-//            }
-//            @Override
-//            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-//                return true;
-//            }
-//        });
-//        stage.addActor(noBackButton);
-//    }
 
     public void label(){
+        float yPos;
+        if (worldHalfHeight > 820)
+            yPos = cam.position.y + 8 * zoom - 20;
+        else
+            yPos = cam.position.y + 7 * zoom - 30;
         outputLabel = new Label(player[currentPlayer].getName() + onTurnStr ,fontStyle96);
         outputLabel.setSize(stage.getWidth(),80);
-        outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , cam.position.y + 7 * zoom - 30);
+        outputLabel.setPosition(cam.position.x - outputLabel.getWidth() /2 , yPos);
         outputLabel.setAlignment(Align.center);
         stage.addActor(outputLabel);
     }
@@ -715,7 +761,6 @@ public class PlayState extends State {
         int labelWidth = 80, labelHeight = 40;
 
         float fontSize = 1;
-
 
         if(player[0].getAi()!=0) {
             //0

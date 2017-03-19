@@ -57,7 +57,7 @@ public class SettingState extends State{
     private Stage stage;
     private float fontScale = 1.2f;
     private int BACK = 1, RULES = 2, START = 3, action, rulesSlide = 0, rulesOpened=1, worldHalfHeight;
-    private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png") ;
+    private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png"), deskaSet = new Texture("gameImage/deskaSettings2.png") ;
     private final Slider slider = new Slider(1f, 4f, 1f, false, uiSkin);
 
     public SettingState(GameStateManager gsm) {
@@ -460,16 +460,18 @@ public class SettingState extends State{
         sb.begin();
         sb.draw(woodTexture, 0, -worldHalfHeight * 2.5f, 1080, worldHalfHeight * 5);
 
-        sb.draw(deska, 540,worldHalfHeight - deska.getHeight(),
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
-        sb.draw(deska, 540,worldHalfHeight,
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
-        sb.draw(deska, 540 - deska.getWidth(), worldHalfHeight - deska.getHeight(),
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
-        sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight,
-                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
 
-        sb.draw(deska, 540,-worldHalfHeight - deska.getHeight() ,
+        sb.draw(deskaSet, 0, worldHalfHeight - deskaSet.getHeight() / 2, 1080, 1080);
+//        sb.draw(deska, 540,worldHalfHeight - deska.getHeight(),
+//                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
+//        sb.draw(deska, 540,worldHalfHeight,
+//                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
+//        sb.draw(deska, 540 - deska.getWidth(), worldHalfHeight - deska.getHeight(),
+//                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
+//        sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight,
+//                0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
+
+        sb.draw(deska, 540,-worldHalfHeight - deska.getHeight(),
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, 540,-worldHalfHeight,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
