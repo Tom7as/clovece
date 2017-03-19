@@ -1,5 +1,7 @@
 package com.jerabek.clovece;
 
+import com.badlogic.gdx.utils.BooleanArray;
+
 /**
  * Created by Tomas on 15.03.2017.
  */
@@ -7,12 +9,23 @@ package com.jerabek.clovece;
 public class SettingData {
     String [] playerName;
     int [] playerType;
-    int [] otherSettings;
+    Boolean [] otherSettings;
+    int pieceCount;
 
-    public SettingData(String[] playerName, int[] playerType, int[] otherSettings) {
+
+    public SettingData(String[] playerName, int[] playerType, Boolean[] otherSettings, int pieceCount) {
         this.playerName = playerName;
         this.playerType = playerType;
         this.otherSettings = otherSettings;
+        this.pieceCount = pieceCount;
+    }
+
+    public int getPieceCount() {
+        return pieceCount;
+    }
+
+    public void setPieceCount(int pieceCount) {
+        this.pieceCount = pieceCount;
     }
 
     public String[] getPlayerName() {
@@ -31,11 +44,11 @@ public class SettingData {
         this.playerType = playerType;
     }
 
-    public int[] getOtherSettings() {
+    public Boolean[] getOtherSettings() {
         return otherSettings;
     }
 
-    public void setOtherSettings(int[] otherSettings) {
+    public void setOtherSettings(Boolean[] otherSettings) {
         this.otherSettings = otherSettings;
     }
 }

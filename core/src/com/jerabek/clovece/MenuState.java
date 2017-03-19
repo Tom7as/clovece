@@ -44,7 +44,7 @@ public class MenuState extends State{
     private Label.LabelStyle fontStyle96, fontStyle48;
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton newGameButton = new TextButton(langStr.get("newGame"), uiSkin);
-    private TextButton resumeButton = new TextButton(/* langStr.get("resumeGame") */ "ěščřžýáíé", uiSkin);
+    private TextButton resumeButton = new TextButton(langStr.get("resumeGame") , uiSkin);
     private TextButton quitButton = new TextButton(langStr.get("quitGame"), uiSkin);
     private TextButton helpButton = new TextButton(langStr.get("gameRules"), uiSkin);
     private TextButton okHelpButton = new TextButton(langStr.get("ok"), uiSkin);
@@ -221,7 +221,7 @@ public class MenuState extends State{
             default:
                 break;
         }
-        if(Gdx.input.justTouched()) Gdx.app.exit();
+
     }
 
     @Override

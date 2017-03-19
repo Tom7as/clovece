@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -15,10 +17,15 @@ import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.FocusListener;
+import com.badlogic.gdx.scenes.scene2d.utils.FocusListener.FocusEvent;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.BooleanArray;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
@@ -35,9 +42,9 @@ public class SettingState extends State{
     private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));;
     private Texture segoe96Texture, segoe36Texture;
     private BitmapFont segoe96Font, segoe36Font ;
-    private Label settingLabel, space;
+    private Label settingLabel, space, pieceCountLabel, checkbox1label, checkbox2label;
     private Label.LabelStyle fontStyle96, fontStyle36;
-    private CheckBox radioButton;
+    private CheckBox radioButton, threeSix, onSixAgain;
     private TextField player0Name, player1Name, player2Name, player3Name;
     private ButtonGroup<CheckBox> buttonGroup0, buttonGroup1, buttonGroup2, buttonGroup3;
     private Table table, table2;
@@ -51,7 +58,7 @@ public class SettingState extends State{
     private float fontScale = 1.2f;
     private int BACK = 1, RULES = 2, START = 3, action, rulesSlide = 0, rulesOpened=1, worldHalfHeight;
     private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png") ;
-
+    private final Slider slider = new Slider(1f, 4f, 1f, false, uiSkin);
 
     public SettingState(GameStateManager gsm) {
         super(gsm);
@@ -84,6 +91,7 @@ public class SettingState extends State{
         playButton();
         settingLabel();
 
+
         playersSettings();
         rulesSettings();
 
@@ -103,6 +111,7 @@ public class SettingState extends State{
 
     }
 
+
     private void rulesSettings() {
         table2 = new Table();
         //table.setFillParent(true);
@@ -114,22 +123,39 @@ public class SettingState extends State{
         table2.scaleBy(2f);
         table2.setPosition( 390 - table2.getWidth(), -worldHalfHeight - table2.getHeight() - 180);
 
-        table2.add().width(10);
 
-        radioButton = new CheckBox("",uiSkin);
-        radioButton.setName("0");
-        table2.add(radioButton).width(30).height(50);
-        table2.add(new Label(langStr.get("Throw3Time"), fontStyle36)).height(50);
+        threeSix = new CheckBox("",uiSkin); // prvni checkbox
+        threeSix.setName("0");
+        table2.add(threeSix).width(20).height(80);
+
+        checkbox1label = new Label(langStr.get("Throw3Time"),fontStyle36);
+        checkbox1label.setSize(300,90);
+        checkbox1label.setWrap(true);
+//        checkbox1label.setPosition(-1030, cam.position.y - 150);
+       // checkbox1label.setAlignment(Align.topLeft);
+        table2.add(checkbox1label).colspan(4).left();
         table2.row();
 
-        table2.add().width(10);
-
-        radioButton = new CheckBox("",uiSkin);
-        radioButton.setName("0");
-        radioButton.toggle();
-        table2.add(radioButton).width(30).height(50);
-        table2.add(new Label(langStr.get("6ThrowAgain"), fontStyle36)).height(50);
+        onSixAgain = new CheckBox("",uiSkin); // druhy check
+        onSixAgain.setName("0");
+        onSixAgain.toggle();
+        table2.add(onSixAgain).width(20).height(50);
+        table2.add(new Label(langStr.get("6ThrowAgain"), fontStyle36)).height(50).colspan(4).left();
         table2.row();
+
+        pieceCountLabel = new Label(langStr.get("pieceCount") + " 4", fontStyle36);
+        table2.add(pieceCountLabel).colspan(2).width(140);
+
+        slider.setValue(4);
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeListener.ChangeEvent event, Actor actor) {
+                pieceCountLabel.setText(langStr.get("pieceCount") + " " + (int)slider.getValue());
+            }
+        });
+        table2.add(slider).height(40).colspan(3).width(160);
+
+
 
     }
 
@@ -385,8 +411,14 @@ public class SettingState extends State{
     public SettingData saveSetting(){
         int [] playerType = new int[4];
         String [] playerName = new String[4];
-        int [] otherSettings = new int[0];
+        Boolean[] otherSettings = new Boolean[2];
+        int pieceCount = 4;
         SettingData settingData;
+
+        otherSettings[0] = threeSix.isChecked();
+        otherSettings[1] = onSixAgain.isChecked();
+
+        pieceCount = (int) slider.getValue();
 
         playerType[0] = Integer.parseInt(buttonGroup0.getChecked().getName());
         playerType[1] = Integer.parseInt(buttonGroup1.getChecked().getName());
@@ -419,7 +451,7 @@ public class SettingState extends State{
 
         //otherSettings[0] = something;
 
-        return settingData = new SettingData(playerName, playerType, otherSettings);
+        return settingData = new SettingData(playerName, playerType, otherSettings, pieceCount);
     }
 
     @Override
@@ -437,7 +469,6 @@ public class SettingState extends State{
         sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
 
-
         sb.draw(deska, 540,-worldHalfHeight - deska.getHeight() ,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, 540,-worldHalfHeight,
@@ -446,8 +477,7 @@ public class SettingState extends State{
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
         sb.draw(deska, 540 - deska.getWidth() , -worldHalfHeight,
                 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
-
-
+        
         sb.end();
         stage.act();
         stage.draw();

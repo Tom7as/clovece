@@ -78,10 +78,10 @@ public class PlayState extends State {
     private int nextField, dice = 0, BACK = 1, action= 0;
     private float movingProgress, step = 0.0625f, moveX, moveY, touchx, touchy, pixelWidth, pixelHeight;
     private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png") , pieceMark;
-    private boolean playerSelectedPiece = false, diceRolled = false;
+    private boolean playerSelectedPiece = false, diceRolled = false, onSixAgain, threeSix;
     private String sixString, totalStr;
     private String  winStr, onTurnStr, threwStr;
-    private int worldHalfHeight, CLOSED = 0, HUMAN = 1, helpOpened = 1, helpSlide = 0, time, ADS = 10;
+    private int rollCount = 0, worldHalfHeight, CLOSED = 0, HUMAN = 1, helpOpened = 1, helpSlide = 0, time, ADS = 10;
 
 
     public PlayState(GameStateManager gsm, SettingData settingData) {
@@ -135,30 +135,37 @@ public class PlayState extends State {
 
     public void configGame(SettingData settingData) {
         int [] playerType = settingData.getPlayerType();
-        int [] otherSetting = settingData.getOtherSettings();
+        Boolean [] otherSetting = settingData.getOtherSettings();
         String [] playerName = settingData.getPlayerName();
+        int pieceCountConfig = settingData.getPieceCount();
 
         for(int a=0; a < playerType.length; a++) {
             player[a] = new Player(playerName[a], playerType[a],0,0);
 
             for(int b=0; b < pieceCount; b++){
-                piece[a*4+b] = new Piece(data[40+a*8+b].getX(),
-                        data[40+a*8+b].getY(),
-                        a*4+b,
-                        a,
-                        40+a*8+b);
-                data[40+a*8+b].setPieceID(a*4+b);
-                if(playerType[a]==0)
-                    piece[a*4+b].setTexture(new Texture("gameImage/transparent.png"));
+                if(b < pieceCountConfig) {
+                    piece[a * 4 + b] = new Piece(data[40 + a * 8 + b].getX(),
+                            data[40 + a * 8 + b].getY(),
+                            a * 4 + b,
+                            a,
+                            40 + a * 8 + b);
+                    data[40 + a * 8 + b].setPieceID(a * 4 + b);
+                    if (playerType[a] == 0)
+                        piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
+                }else{//do domecku
+                    piece[a * 4 + b] = new Piece(data[40 + a * 8 + b + 4].getX(),
+                            data[40 + a * 8 + b + 4].getY(),
+                            a * 4 + b,
+                            a,
+                            40 + a * 8 + b + 4);
+                    data[40 + a * 8 + b + 4].setPieceID(a * 4 + b);
+                    if (playerType[a] == 0)
+                        piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
+                }
             }
-
         }
-
-//        player[0] = new Player(blueStr, 0, 0, 0);
-//        player[1] = new Player(yellowStr, 1, 0, 0);
-//        player[2] = new Player(redStr, 1, 0, 0);
-//        player[3] = new Player(greenStr, 1, 0, 0);
-
+        threeSix = otherSetting[0];
+        onSixAgain = otherSetting[1];
     }
 
     public void getPieceByXY(float x, float y){
@@ -198,7 +205,7 @@ public class PlayState extends State {
         if(!gameOver) {
             if (player[currentPlayer].getAi() == CLOSED) nextPlayer();
             else {
-                if (player[currentPlayer].getAi() == 1 || (framePerThrow > 80)) {
+                if (player[currentPlayer].getAi() == 1 || (framePerThrow > 5)) {
                     if (turnOver) {
                         if (!diceRolled) {
                             if (player[currentPlayer].getAi() == HUMAN) {
@@ -230,11 +237,28 @@ public class PlayState extends State {
                                 turnOver = false;
 
                             }
-                        } else if (diceRolled) turnOver = false;
+                        } else {
+                            if (diceRolled) {
+                                if (threeSix){
+                                    if(noInGamePiece() && rollCount < 3) {
+                                        rollAgain= true;
+                                        turnOver = false;
+                                        rollCount++;
+                                    }
+                                    else {
+                                        rollCount = 1;
+                                        turnOver = false;
+                                    }
+                                }
+                                else {
+                                    turnOver = false;
+                                }
+                            }
+                        }
                     } else {
                         if (move) {
                             startMove();
-                        } else if (framePerThrow > 120) {
+                        } else if (framePerThrow > 10) {
                             if (!rollAgain) nextPlayer();
                             rollBtnPressed = false;
                             diceRolled = false;
@@ -262,6 +286,16 @@ public class PlayState extends State {
 //        if(time>=180 * 3 /* 000 */) action = ADS;
 //        if(action==ADS) adsTime();
 
+    }
+
+    private boolean noInGamePiece() {
+        int i;
+        for(i = 0; i < 4; i++) {
+            if (piece[i + currentPlayer].getFieldNumber() < 40) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void callAi(int ai) {
@@ -559,7 +593,7 @@ public class PlayState extends State {
     private int throwDice(){
         dice = random(1,6);
         if(dice==6) {
-            rollAgain = true;
+            if(onSixAgain) rollAgain = true;
 
             player[currentPlayer].addSix();
             statsLabels[currentPlayer][0].setText(sixString + " " + player[currentPlayer].getSixs());

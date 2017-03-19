@@ -40,8 +40,6 @@ public class Piece {
         this.startFieldNumber = FieldNumber;
     }
 
-
-
     int getStartFieldNumber() {
         return startFieldNumber;
     }
@@ -57,7 +55,6 @@ public class Piece {
     Texture getTexture() {
         return texture;
     }
-
 
     public float getX() {
         return x;
