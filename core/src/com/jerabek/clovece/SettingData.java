@@ -7,17 +7,24 @@ import com.badlogic.gdx.utils.BooleanArray;
  */
 
 public class SettingData {
-    String [] playerName;
-    int [] playerType;
-    Boolean [] otherSettings;
-    int pieceCount;
+    private String [] playerName;
+    private int [] playerType;
+    private Boolean [] otherSettings;
+    private int pieceCount, gameSpeed;
 
-
-    public SettingData(String[] playerName, int[] playerType, Boolean[] otherSettings, int pieceCount) {
+    public SettingData(String[] playerName, int[] playerType, Boolean[] otherSettings, int pieceCount, int gameSpeed) {
         this.playerName = playerName;
         this.playerType = playerType;
         this.otherSettings = otherSettings;
         this.pieceCount = pieceCount;
+        this.gameSpeed = gameSpeed;
+    }
+    public int getGameSpeed() {
+        return gameSpeed;
+    }
+
+    public void setGameSpeed(int gameSpeed) {
+        this.gameSpeed = gameSpeed;
     }
 
     public int getPieceCount() {

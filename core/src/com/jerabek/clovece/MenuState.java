@@ -64,6 +64,7 @@ public class MenuState extends State{
         segoe48Font = new BitmapFont(Gdx.files.internal("font/segoe48.fnt"), new TextureRegion(segoe48Texture), false);
         segoe48Font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.MipMapNearestLinear);
 
+        segoe96Font.getData().setLineHeight(110);
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
         fontStyle48 = new Label.LabelStyle(segoe48Font, Color.BLACK);
 
@@ -76,7 +77,7 @@ public class MenuState extends State{
         logoLabel();
         helpLabel();
         newGameButton();
-        resumeButton();
+
         helpButton();
         quitButton();
         okHelpButton();
@@ -85,7 +86,7 @@ public class MenuState extends State{
 
     private void logoLabel(){
         logoLabel.setSize(stage.getWidth(),120);
-        logoLabel.setPosition(cam.position.x - logoLabel.getWidth() /2 , cam.position.y + 250);
+        logoLabel.setPosition(cam.position.x - logoLabel.getWidth() /2 , cam.position.y + 150);
         logoLabel.setAlignment(Align.center);
         logoLabel.setFontScale(1.5f);
         stage.addActor(logoLabel);
@@ -99,7 +100,7 @@ public class MenuState extends State{
     }
     private void newGameButton(){
         newGameButton.setSize(600,150);
-        newGameButton.setPosition(cam.position.x - newGameButton.getWidth() / 2, cam.position.y );
+        newGameButton.setPosition(cam.position.x - newGameButton.getWidth() / 2, cam.position.y - 150);
         newGameButton.getLabel().setFontScale(1.5f);
         newGameButton.addListener(new InputListener(){
             @Override
@@ -133,7 +134,7 @@ public class MenuState extends State{
     }
     private void helpButton(){
         helpButton.setSize(600,150);
-        helpButton.setPosition(cam.position.x - helpButton.getWidth() / 2, cam.position.y - 400);
+        helpButton.setPosition(cam.position.x - helpButton.getWidth() / 2, cam.position.y - 350);
         helpButton.getLabel().setFontScale(1.5f);
         helpButton.addListener(new InputListener(){
             @Override
@@ -167,7 +168,7 @@ public class MenuState extends State{
     }
     private void quitButton(){
         quitButton.setSize(600,150);
-        quitButton.setPosition(cam.position.x - quitButton.getWidth() / 2, cam.position.y - 600);
+        quitButton.setPosition(cam.position.x - quitButton.getWidth() / 2, cam.position.y - 550);
         quitButton.getLabel().setFontScale(1.5f);
         quitButton.addListener(new InputListener(){
             @Override
@@ -224,7 +225,13 @@ public class MenuState extends State{
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
+        sb.draw(woodTexture, -1080, 0,
+                woodTexture.getWidth() * 8,
+                woodTexture.getHeight() * 7,
+                0, 7,
+                8, 0);
+
+        //sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
         sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 400, 288, 288);
         sb.end();
 
@@ -239,10 +246,6 @@ public class MenuState extends State{
         shapeRenderer.begin(ShapeType.Filled);
         shapeRenderer.rect(-1060, cam.position.y - 470, 1010,1140);
         shapeRenderer.end();
-
-//        helpLabel.setSize(980,800);
-//        helpLabel.setWrap(true);
-//        helpLabel.setPosition(-1030, cam.position.y - 150);
 
         stage.act();
         stage.draw();

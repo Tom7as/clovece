@@ -42,7 +42,7 @@ public class SettingState extends State{
     private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));;
     private Texture segoe96Texture, segoe36Texture;
     private BitmapFont segoe96Font, segoe36Font ;
-    private Label settingLabel, space, pieceCountLabel, checkbox1label, checkbox2label;
+    private Label settingLabel, space, pieceCountLabel, checkbox1label, checkbox2label, gameSpeedLabel;
     private Label.LabelStyle fontStyle96, fontStyle36;
     private CheckBox radioButton, threeSix, onSixAgain;
     private TextField player0Name, player1Name, player2Name, player3Name;
@@ -59,6 +59,7 @@ public class SettingState extends State{
     private int BACK = 1, RULES = 2, START = 3, action, rulesSlide = 0, rulesOpened=1, worldHalfHeight;
     private Texture woodTexture = new Texture("gameImage/wood.png"), deska = new Texture("gameImage/deskaq.png"), deskaSet = new Texture("gameImage/deskaSettings2.png") ;
     private final Slider slider = new Slider(1f, 4f, 1f, false, uiSkin);
+    private final Slider sliderSpeed = new Slider(1f, 3f, 1f, false, uiSkin);
 
     public SettingState(GameStateManager gsm) {
         super(gsm);
@@ -79,7 +80,7 @@ public class SettingState extends State{
         segoe36Font.getData().setScale(0.5f);
         fontStyle36 = new Label.LabelStyle(segoe36Font, Color.BLACK);
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
-        settingLabel = new Label(langStr.get("settings"),fontStyle96);
+
 
         woodTexture.setWrap(Repeat, Repeat);
 
@@ -123,13 +124,12 @@ public class SettingState extends State{
         table2.scaleBy(2f);
         table2.setPosition( 390 - table2.getWidth(), -worldHalfHeight - table2.getHeight() - 180);
 
-
         threeSix = new CheckBox("",uiSkin); // prvni checkbox
         threeSix.setName("0");
-        table2.add(threeSix).width(20).height(80);
+        table2.add(threeSix).width(40).height(80).left();
 
         checkbox1label = new Label(langStr.get("Throw3Time"),fontStyle36);
-        checkbox1label.setSize(300,90);
+        checkbox1label.setSize(330,90);
         checkbox1label.setWrap(true);
 //        checkbox1label.setPosition(-1030, cam.position.y - 150);
        // checkbox1label.setAlignment(Align.topLeft);
@@ -139,13 +139,13 @@ public class SettingState extends State{
         onSixAgain = new CheckBox("",uiSkin); // druhy check
         onSixAgain.setName("0");
         onSixAgain.toggle();
-        table2.add(onSixAgain).width(20).height(50);
+        table2.add(onSixAgain).width(40).height(50).left();
         table2.add(new Label(langStr.get("6ThrowAgain"), fontStyle36)).height(50).colspan(4).left();
         table2.row();
 
         pieceCountLabel = new Label(langStr.get("pieceCount") + " 4", fontStyle36);
-        table2.add(pieceCountLabel).colspan(2).width(140);
-
+        table2.add(pieceCountLabel).left().colspan(5);
+        table2.row();
         slider.setValue(4);
         slider.addListener(new ChangeListener() {
             @Override
@@ -153,8 +153,21 @@ public class SettingState extends State{
                 pieceCountLabel.setText(langStr.get("pieceCount") + " " + (int)slider.getValue());
             }
         });
-        table2.add(slider).height(40).colspan(3).width(160);
+        table2.add(slider).height(40).left().colspan(5).width(320).left();
 
+        table2.row();
+
+        gameSpeedLabel = new Label(langStr.get("gameSpeed") + " normal", fontStyle36);
+        table2.add(gameSpeedLabel).left().colspan(5);
+        table2.row();
+        sliderSpeed.setValue(2);
+        sliderSpeed.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeListener.ChangeEvent event, Actor actor) {
+                gameSpeedLabel.setText(langStr.get("gameSpeed") + " " +  langStr.get("speed" + (int)sliderSpeed.getValue()));
+            }
+        });
+        table2.add(sliderSpeed).height(40).colspan(5).width(320).left();
 
 
     }
@@ -301,8 +314,15 @@ public class SettingState extends State{
     }
 
     private void settingLabel(){
+        float yPos;
+        if (worldHalfHeight > 820)
+            yPos = cam.position.y + 680;
+        else
+            yPos = cam.position.y + 560;
+
+        settingLabel = new Label(langStr.get("settings"),fontStyle96);
         settingLabel.setSize(stage.getWidth(),120);
-        settingLabel.setPosition(cam.position.x - settingLabel.getWidth() / 2 , cam.position.y + 580);
+        settingLabel.setPosition(cam.position.x - settingLabel.getWidth() /2 , yPos);
         settingLabel.setAlignment(Align.center);
         settingLabel.setFontScale(1f);
         stage.addActor(settingLabel);
@@ -413,11 +433,13 @@ public class SettingState extends State{
         String [] playerName = new String[4];
         Boolean[] otherSettings = new Boolean[2];
         int pieceCount = 4;
+        int gameSpeed = 2;
         SettingData settingData;
 
         otherSettings[0] = threeSix.isChecked();
         otherSettings[1] = onSixAgain.isChecked();
 
+        gameSpeed = (int) sliderSpeed.getValue();
         pieceCount = (int) slider.getValue();
 
         playerType[0] = Integer.parseInt(buttonGroup0.getChecked().getName());
@@ -451,15 +473,19 @@ public class SettingState extends State{
 
         //otherSettings[0] = something;
 
-        return settingData = new SettingData(playerName, playerType, otherSettings, pieceCount);
+        return settingData = new SettingData(playerName, playerType, otherSettings, pieceCount, gameSpeed);
     }
 
     @Override
     public void render(SpriteBatch sb) {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
-        sb.draw(woodTexture, 0, -worldHalfHeight * 2.5f, 1080, worldHalfHeight * 5);
 
+        sb.draw(woodTexture, 0, -worldHalfHeight * 2.1f,
+                woodTexture.getWidth() * 4,
+                woodTexture.getHeight() * 14,
+                0, 14,
+                4, 0);
 
         sb.draw(deskaSet, 0, worldHalfHeight - deskaSet.getHeight() / 2, 1080, 1080);
 //        sb.draw(deska, 540,worldHalfHeight - deska.getHeight(),

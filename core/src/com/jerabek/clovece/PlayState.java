@@ -68,9 +68,9 @@ public class PlayState extends State {
     private Player[] player = new Player[playersCount];
     private Label[][] statsLabels = new Label[playersCount][3];
 
-    private int currentPlayer=0, nextPlayer=1, framePerThrow =0, fromField, targetField;
+    private int currentPlayer=0, nextPlayer=1, frameCounter =0, fromField, targetField;
     private Vector3 touchPoint = new Vector3();
-    private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));;
+    private I18NBundle langStr = I18NBundle.createBundle(Gdx.files.internal("strings/strings"));
     private Skin uiSkin = new Skin(Gdx.files.internal("skin/glassyui/glassy-ui.json"));
     private TextButton rollButton = new TextButton(langStr.get("roll"), uiSkin);
     private TextButton backButton = new TextButton(langStr.get("back"), uiSkin);
@@ -87,7 +87,7 @@ public class PlayState extends State {
     private String  winStr, onTurnStr, threwStr;
     private int rollCount = 0, worldHalfHeight, CLOSED = 0, HUMAN = 1, helpOpened = 1, helpSlide = 0, time;
     private static final int BACK = 1, PLAY = 2, PAUSE = 3, ADS = 10, action= 0;
-    private int nextField, dice = 0, playState = PLAY;
+    private int nextField, dice = 0, playState = PLAY, framePerPhase, stepSpeed;
     private Table tablePause;
     private Window pauseWindow;
 
@@ -121,6 +121,8 @@ public class PlayState extends State {
         segoe36Texture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.Linear);
         segoe36Font = new BitmapFont(Gdx.files.internal("font/segoe36.fnt"), new TextureRegion(segoe36Texture), false);
         segoe36Font.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.MipMapNearestLinear);
+        segoe48Font.getData().setScale(0.9f);
+        segoe36Font.getData().setScale(0.9f);
 
         fontStyle96 = new LabelStyle(segoe96Font, Color.BLACK);
         fontStyle48 = new LabelStyle(segoe48Font, Color.BLACK);
@@ -153,6 +155,21 @@ public class PlayState extends State {
         String [] playerName = settingData.getPlayerName();
         int pieceCountConfig = settingData.getPieceCount();
 
+        switch (settingData.getGameSpeed()){
+            case 1:
+                step = 0.0625f;
+                framePerPhase = 60;
+                break;
+            case 2:
+                step = 0.0625f;
+                framePerPhase = 40;
+                break;
+            case 3:
+                step = 0.125f;
+                framePerPhase = 25;
+                break;
+        }
+
         for(int a=0; a < playerType.length; a++) {
             player[a] = new Player(playerName[a], playerType[a],0,0);
 
@@ -167,6 +184,7 @@ public class PlayState extends State {
                     if (playerType[a] == 0)
                         piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
                 }else{//do domecku
+                    home[a]++;
                     piece[a * 4 + b] = new Piece(data[40 + a * 8 + b + 4].getX(),
                             data[40 + a * 8 + b + 4].getY(),
                             a * 4 + b,
@@ -283,7 +301,7 @@ public class PlayState extends State {
         if(!gameOver) {
             if (player[currentPlayer].getAi() == CLOSED) nextPlayer();
             else {
-                if (player[currentPlayer].getAi() == 1 || (framePerThrow > 5)) {
+                if (player[currentPlayer].getAi() == 1 || (frameCounter > framePerPhase)) {
                     if (turnOver) {
                         if (!diceRolled) {
                             if (player[currentPlayer].getAi() == HUMAN) {
@@ -305,7 +323,7 @@ public class PlayState extends State {
                                     handleInput();
                                     getPieceByXY(touchx, touchy);
                                     //getPieceByXY(touchx, touchy);
-                                } else if (framePerThrow > 7) {
+                                } else if (frameCounter > framePerPhase * 2) {
                                     callAi(3);
 
                                 }
@@ -336,7 +354,7 @@ public class PlayState extends State {
                     } else {
                         if (move) {
                             startMove();
-                        } else if (framePerThrow > 10) {
+                        } else if (frameCounter > framePerPhase * 3) {
                             if (!rollAgain) nextPlayer();
                             rollBtnPressed = false;
                             diceRolled = false;
@@ -344,12 +362,12 @@ public class PlayState extends State {
                             playerSelectedPiece = false;
                             rollButton.setVisible(false);
                             rollAgain = false;
-                            framePerThrow = 0;
+                            frameCounter = 0;
                         }
                     }
 
                 }
-                framePerThrow++;
+                frameCounter++;
             }
         }
     }
@@ -418,19 +436,19 @@ public class PlayState extends State {
 
         switch (inGamePieceCount()){
             case 1:
-                score = 23;
+                score = 30;
                 break;
             case 2:
                 score = 5;
                 break;
             case 3:
-                score = 0;
+                score = -10;
                 break;
         }
 
         if(data[field].getPieceID() != -1) {
             if (piece[data[field].getPieceID()].getPlayer() != currentPlayer)
-                score += 15;
+                score += 20;
         }
 
         for (int a = 6; a > 0; a--) {
@@ -438,7 +456,7 @@ public class PlayState extends State {
             if (data[getStartFieldByPlayer()].getPieceID() != -1) {
                 scannedField = piece[data[getStartFieldByPlayer()].getPieceID()].getPlayer();
                 if (scannedField != currentPlayer)
-                    score -= 12; // utec od protivniku
+                    score -= 10; // utec od protivniku
             }
         }
 
@@ -465,10 +483,11 @@ public class PlayState extends State {
         for(int a = 0; a < 6; a++) {
             field++;
             if(field == 40) field = 0;
-            if(data[field].getPieceID() != -1) {
+            if(data[field].getPieceID() != -1 && piece[data[field].getPieceID()].getPlayer() != currentPlayer) {
                 scannedField = piece[data[field].getPieceID()].getPlayer();
-                if (a < dice && scannedField != currentPlayer) score -= 12;
-                if (a == dice && scannedField != currentPlayer) score += 15;
+                if (a < dice ) score -= 12;
+                if (a == dice) score += 15;
+                if (a > dice ) score += 8;
             }
         }
 
@@ -476,10 +495,8 @@ public class PlayState extends State {
         for(int a = 6; a > 0; a--) {
             field--;
             if(field == -1) field = 39;
-            if(data[field].getPieceID() != -1) {
-                scannedField = piece[data[field].getPieceID()].getPlayer();
-                if (scannedField != currentPlayer)
-                    score += 12; // utec od protivniku
+            if(data[field].getPieceID() != -1 && piece[data[field].getPieceID()].getPlayer() != currentPlayer) {
+                    score += 10; // utec od protivniku
             }
         }
 
@@ -491,12 +508,18 @@ public class PlayState extends State {
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
+//        sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
+        sb.draw(woodTexture, 0, 0 ,
+                woodTexture.getWidth() * 4,
+                woodTexture.getHeight() * 7,
+                0, 7,
+                4, 0);
+
         sb.draw(deska, 540, worldHalfHeight - deska.getHeight(), 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, true);
         sb.draw(deska, 540,worldHalfHeight, 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, true, false);
         sb.draw(deska, 540 - deska.getWidth(), worldHalfHeight - deska.getHeight(), 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, true);
         sb.draw(deska, 540 - deska.getWidth() , worldHalfHeight, 0, 0, 540, 540, 1f, 1f, 0, 0, 0, 540, 540, false, false);
-        sb.draw(footerTexture, 0, cam.position.y - 890);
+        sb.draw(footerTexture, 0, cam.position.y - 910);
 
         refreshBoard(sb);
         paintPieces(sb);
@@ -523,7 +546,7 @@ public class PlayState extends State {
             movingPiece = piece[data[fromField].getPieceID()];
             setMoveTarget();
             player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
-            statsLabels[currentPlayer][1].setText(totalStr + " " + player[currentPlayer].getSum());
+            statsLabels[currentPlayer][1].setText(totalStr + player[currentPlayer].getSum());
     }
 
     private void checkWin() {
@@ -640,6 +663,7 @@ public class PlayState extends State {
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
+        int axy;
         int pieceField;
         for (int i = currentPlayer * pieceCount; i < currentPlayer * pieceCount + pieceCount; i++) {
             pieceField = piece[i].getFieldNumber();
@@ -672,11 +696,14 @@ public class PlayState extends State {
                     }
                 }
                 //zajeti do domečku
+
                 else if(pieceField < 40 && pieceField <= goHomeField() && pieceField + dice > goHomeField()){ //piecefield 44-47 + 8*currentPlayer
                     if(34 + pieceField + dice <= 47 + 10 * currentPlayer) {
                         int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
                         int targetPiece = data[targetField].getPieceID();
-                        if(targetPiece == -1) {
+                        if(targetPiece == -1 || targetPiece == i) {
+                            if(targetPiece == i)
+                                axy = 1;
                             movablePieces.add(piece[i].getPieceId());
                         }
                     }
@@ -770,7 +797,6 @@ public class PlayState extends State {
         rollButton.setVisible(false);
 
         return dice;
-
     }
 
     private void nextPlayer(){
