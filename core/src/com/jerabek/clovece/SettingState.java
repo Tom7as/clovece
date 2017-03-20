@@ -157,7 +157,7 @@ public class SettingState extends State{
 
         table2.row();
 
-        gameSpeedLabel = new Label(langStr.get("gameSpeed") + " normal", fontStyle36);
+        gameSpeedLabel = new Label(langStr.get("gameSpeed") + " " +  langStr.get("speed2"), fontStyle36);
         table2.add(gameSpeedLabel).left().colspan(5);
         table2.row();
         sliderSpeed.setValue(2);

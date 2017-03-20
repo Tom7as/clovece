@@ -336,13 +336,13 @@ public class PlayState extends State {
                         } else {
                             if (diceRolled) {
                                 if (threeSix){
-                                    if(noInGamePiece() && rollCount < 3) {
+                                    if(noInGamePiece() && rollCount < 2) {
                                         rollAgain= true;
                                         turnOver = false;
                                         rollCount++;
                                     }
                                     else {
-                                        rollCount = 1;
+                                        rollCount = 0;
                                         turnOver = false;
                                     }
                                 }
@@ -375,7 +375,7 @@ public class PlayState extends State {
     private boolean noInGamePiece() {
         int i;
         for(i = 0; i < 4; i++) {
-            if (piece[i + currentPlayer].getFieldNumber() < 40) {
+            if (piece[i + currentPlayer * 4].getFieldNumber() < 40) {
                 return false;
             }
         }
@@ -385,7 +385,7 @@ public class PlayState extends State {
     private int inGamePieceCount() {
         int i, x = 0;
         for(i = 0; i < 4; i++) {
-            if (piece[i + currentPlayer].getFieldNumber() < 40) {
+            if (piece[i + currentPlayer * 4].getFieldNumber() < 40) {
                 x++;
             }
         }
@@ -435,6 +435,9 @@ public class PlayState extends State {
         int field = getStartFieldByPlayer(), scannedField, score = 0;
 
         switch (inGamePieceCount()){
+            case 0:
+                score = 30;
+                break;
             case 1:
                 score = 30;
                 break;
@@ -442,7 +445,7 @@ public class PlayState extends State {
                 score = 5;
                 break;
             case 3:
-                score = -10;
+                score = -15;
                 break;
         }
 
@@ -478,13 +481,11 @@ public class PlayState extends State {
 
     private int lookForSafeField() {
         int field = fromField, score = 0;
-        int scannedField;
 
         for(int a = 0; a < 6; a++) {
             field++;
             if(field == 40) field = 0;
             if(data[field].getPieceID() != -1 && piece[data[field].getPieceID()].getPlayer() != currentPlayer) {
-                scannedField = piece[data[field].getPieceID()].getPlayer();
                 if (a < dice ) score -= 12;
                 if (a == dice) score += 15;
                 if (a > dice ) score += 8;
@@ -702,8 +703,6 @@ public class PlayState extends State {
                         int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
                         int targetPiece = data[targetField].getPieceID();
                         if(targetPiece == -1 || targetPiece == i) {
-                            if(targetPiece == i)
-                                axy = 1;
                             movablePieces.add(piece[i].getPieceId());
                         }
                     }
