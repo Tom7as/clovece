@@ -187,8 +187,6 @@ public class PlayState extends State {
             if(piece[movablePieces.get(a)].getX()==x && piece[movablePieces.get(a)].getY()==y){
                 fromField = piece[movablePieces.get(a)].getFieldNumber();
                 playerSelectedPiece = true;
-
-
             }
         }
     }
@@ -307,8 +305,9 @@ public class PlayState extends State {
                                     handleInput();
                                     getPieceByXY(touchx, touchy);
                                     //getPieceByXY(touchx, touchy);
-                                } else if (framePerThrow > 80) {
-                                    callAi(player[currentPlayer].getAi());
+                                } else if (framePerThrow > 7) {
+                                    callAi(3);
+
                                 }
 
                             } else {
@@ -356,7 +355,7 @@ public class PlayState extends State {
     }
 
     private boolean noInGamePiece() {
-        int i, x;
+        int i;
         for(i = 0; i < 4; i++) {
             if (piece[i + currentPlayer].getFieldNumber() < 40) {
                 return false;
@@ -365,7 +364,7 @@ public class PlayState extends State {
         return true;
     }
 
-    private int InGamePieceCount() {
+    private int inGamePieceCount() {
         int i, x = 0;
         for(i = 0; i < 4; i++) {
             if (piece[i + currentPlayer].getFieldNumber() < 40) {
@@ -376,36 +375,115 @@ public class PlayState extends State {
     }
 
     private void callAi(int ai) {
-        switch(ai){
-            case 2:
-                fromField = piece[movablePieces.get(0)].getFieldNumber();
-                playerSelectedPiece = true;
-                break;
-            case 3:
-                fromField = piece[movablePieces.get(0)].getFieldNumber();
-                if(movablePieces.size() == 1 && InGamePieceCount() == 1){
-                    playerSelectedPiece = true;
-                } else {
-                    int [] pieceArrays = new int[movablePieces.size()];
-                    for(int a = 0; a < movablePieces.size(); a++)
-                        pieceArrays[a] = pieceArrays(createFieldArray());
-
-
-                    if(canKickSomeone())
-
+        if(movablePieces.size() == 1){
+            fromField = piece[movablePieces.get(0)].getFieldNumber();
+            playerSelectedPiece = true;
+        } else {
+            if(inGamePieceCount() == 1){
+                //skus nasadit pokud safe
+            }
+            int selectedPiecesScore = -1000;
+            int [] piecesScore = new int[movablePieces.size()];
+            for(int a = 0; a < movablePieces.size(); a++) {
+                fromField = piece[movablePieces.get(a)].getFieldNumber();
+                if(fromField<40) {
+                    piecesScore[a] = lookForSafeField();
+                    piecesScore[a] += closerToFinish();
+                    piecesScore[a] += jumpToHome();
                 }
-                break;
-            case 4: break;
+                if(fromField>39) piecesScore[a] += addNewToBoard();
+            }
+            for(int a = 0; a < piecesScore.length; a++){
+                if(selectedPiecesScore < piecesScore[a]) {
+                    selectedPiecesScore = piecesScore[a];
+                    fromField = piece[movablePieces.get(a)].getFieldNumber();
+                }
+            }
+            playerSelectedPiece = true;
+
         }
     }
 
-    private void createFieldArray() {
-        int field = fromField;
-        int [] pieceArrays = new int[10];
-        for(int a = 0; a < 10; a++) {
-            if(field == 40) field = 0;
-            pieceArrays[a] = data[field].getPieceID();
+    private int jumpToHome() {
+        int field = fromField, score = 0;
+
+        if(field <= goHomeField() && field + dice > goHomeField()){
+                score = 200;
         }
+        return score;
+    }
+
+    private int addNewToBoard() {
+        int field = getStartFieldByPlayer(), scannedField, score = 0;
+
+        switch (inGamePieceCount()){
+            case 1:
+                score = 23;
+                break;
+            case 2:
+                score = 5;
+                break;
+            case 3:
+                score = 0;
+                break;
+        }
+
+        if(data[field].getPieceID() != -1) {
+            if (piece[data[field].getPieceID()].getPlayer() != currentPlayer)
+                score += 15;
+        }
+
+        for (int a = 6; a > 0; a--) {
+            field--;
+            if (data[getStartFieldByPlayer()].getPieceID() != -1) {
+                scannedField = piece[data[getStartFieldByPlayer()].getPieceID()].getPlayer();
+                if (scannedField != currentPlayer)
+                    score -= 12; // utec od protivniku
+            }
+        }
+
+        return score;
+    }
+
+    private int closerToFinish() {
+        int field = fromField, score = 0;
+        int finish = getStartFieldByPlayer();
+        if(field==finish){
+            score=500;
+        }else if(field>=finish)
+            score = field - finish;
+        else
+            score = field + 40 - finish;
+
+        return score;
+    }
+
+    private int lookForSafeField() {
+        int field = fromField, score = 0;
+        int scannedField;
+
+        for(int a = 0; a < 6; a++) {
+            field++;
+            if(field == 40) field = 0;
+            if(data[field].getPieceID() != -1) {
+                scannedField = piece[data[field].getPieceID()].getPlayer();
+                if (a < dice && scannedField != currentPlayer) score -= 12;
+                if (a == dice && scannedField != currentPlayer) score += 15;
+            }
+        }
+
+        field = fromField;
+        for(int a = 6; a > 0; a--) {
+            field--;
+            if(field == -1) field = 39;
+            if(data[field].getPieceID() != -1) {
+                scannedField = piece[data[field].getPieceID()].getPlayer();
+                if (scannedField != currentPlayer)
+                    score += 12; // utec od protivniku
+            }
+        }
+
+        return score;
     }
 
     @Override
@@ -595,8 +673,6 @@ public class PlayState extends State {
                 }
                 //zajeti do domečku
                 else if(pieceField < 40 && pieceField <= goHomeField() && pieceField + dice > goHomeField()){ //piecefield 44-47 + 8*currentPlayer
-
-
                     if(34 + pieceField + dice <= 47 + 10 * currentPlayer) {
                         int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
                         int targetPiece = data[targetField].getPieceID();
