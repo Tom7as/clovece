@@ -191,6 +191,8 @@ public class PlayState extends State {
                             a,
                             40 + a * 8 + b + 4);
                     data[40 + a * 8 + b + 4].setPieceID(a * 4 + b);
+                    data[40 + a * 8 + b].setPieceID(-1);
+
                     if (playerType[a] == 0)
                         piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
                 }
