@@ -10,17 +10,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -28,13 +25,15 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.jerabek.clovece.gameObject.GameField;
+import com.jerabek.clovece.gameObject.Piece;
+import com.jerabek.clovece.gameObject.Player;
+import com.jerabek.clovece.gameObject.SettingData;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
@@ -59,7 +58,7 @@ public class PlayState extends State {
     private int zoom = 90;
     private float fieldSize = 94, smallFieldSize = fieldSize*0.85f, pieceSize = 61;
 
-    private GameField[] data = GameField.getData();
+    private GameField[] playBoard = GameField.getPlayBoard();
 
     private ArrayList<Integer> movablePieces = new ArrayList<Integer>();
 
@@ -175,23 +174,23 @@ public class PlayState extends State {
 
             for(int b=0; b < pieceCount; b++){
                 if(b < pieceCountConfig) {
-                    piece[a * 4 + b] = new Piece(data[40 + a * 8 + b].getX(),
-                            data[40 + a * 8 + b].getY(),
+                    piece[a * 4 + b] = new Piece(playBoard[40 + a * 8 + b].getX(),
+                            playBoard[40 + a * 8 + b].getY(),
                             a * 4 + b,
                             a,
                             40 + a * 8 + b);
-                    data[40 + a * 8 + b].setPieceID(a * 4 + b);
+                    playBoard[40 + a * 8 + b].setPieceID(a * 4 + b);
                     if (playerType[a] == 0)
                         piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
                 }else{//do domecku
                     home[a]++;
-                    piece[a * 4 + b] = new Piece(data[40 + a * 8 + b + 4].getX(),
-                            data[40 + a * 8 + b + 4].getY(),
+                    piece[a * 4 + b] = new Piece(playBoard[40 + a * 8 + b + 4].getX(),
+                            playBoard[40 + a * 8 + b + 4].getY(),
                             a * 4 + b,
                             a,
                             40 + a * 8 + b + 4);
-                    data[40 + a * 8 + b + 4].setPieceID(a * 4 + b);
-                    data[40 + a * 8 + b].setPieceID(-1);
+                    playBoard[40 + a * 8 + b + 4].setPieceID(a * 4 + b);
+                    playBoard[40 + a * 8 + b].setPieceID(-1);
 
                     if (playerType[a] == 0)
                         piece[a * 4 + b].setTexture(new Texture("gameImage/transparent.png"));
@@ -451,15 +450,15 @@ public class PlayState extends State {
                 break;
         }
 
-        if(data[field].getPieceID() != -1) {
-            if (piece[data[field].getPieceID()].getPlayer() != currentPlayer)
+        if(playBoard[field].getPieceID() != -1) {
+            if (piece[playBoard[field].getPieceID()].getPlayer() != currentPlayer)
                 score += 20;
         }
 
         for (int a = 6; a > 0; a--) {
             field--;
-            if (data[getStartFieldByPlayer()].getPieceID() != -1) {
-                scannedField = piece[data[getStartFieldByPlayer()].getPieceID()].getPlayer();
+            if (playBoard[getStartFieldByPlayer()].getPieceID() != -1) {
+                scannedField = piece[playBoard[getStartFieldByPlayer()].getPieceID()].getPlayer();
                 if (scannedField != currentPlayer)
                     score -= 10; // utec od protivniku
             }
@@ -487,7 +486,7 @@ public class PlayState extends State {
         for(int a = 0; a < 6; a++) {
             field++;
             if(field == 40) field = 0;
-            if(data[field].getPieceID() != -1 && piece[data[field].getPieceID()].getPlayer() != currentPlayer) {
+            if(playBoard[field].getPieceID() != -1 && piece[playBoard[field].getPieceID()].getPlayer() != currentPlayer) {
                 if (a < dice ) score -= 12;
                 if (a == dice) score += 15;
                 if (a > dice ) score += 8;
@@ -498,7 +497,7 @@ public class PlayState extends State {
         for(int a = 6; a > 0; a--) {
             field--;
             if(field == -1) field = 39;
-            if(data[field].getPieceID() != -1 && piece[data[field].getPieceID()].getPlayer() != currentPlayer) {
+            if(playBoard[field].getPieceID() != -1 && piece[playBoard[field].getPieceID()].getPlayer() != currentPlayer) {
                     score += 10; // utec od protivniku
             }
         }
@@ -546,7 +545,7 @@ public class PlayState extends State {
     private void setMove(){
             movablePieces.clear();
             if (fromField > 39) nasazeni = true; else nasazeni = false;
-            movingPiece = piece[data[fromField].getPieceID()];
+            movingPiece = piece[playBoard[fromField].getPieceID()];
             setMoveTarget();
             player[currentPlayer].setSum(player[currentPlayer].getSum()+dice);
             statsLabels[currentPlayer][1].setText(totalStr + player[currentPlayer].getSum());
@@ -560,8 +559,6 @@ public class PlayState extends State {
     }
 
     private void setMoveTarget(){
-        Vector2 vector;
-
         if(!nasazeni){ // posunout dal
             targetField = dice+fromField;
 
@@ -574,14 +571,14 @@ public class PlayState extends State {
                 targetField -= 40;
             }
 
-            int targetPiece = data[targetField].getPieceID();
+            int targetPiece = playBoard[targetField].getPieceID();
             if (targetPiece != -1) {
                 kickPiece(targetPiece);
                 player[currentPlayer].setSixs(player[currentPlayer].getSixs()+1);
             }
             movingPiece.setFieldNumber(targetField);
-            data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
-            data[fromField].setPieceID(-1);//vynuluj starej
+            playBoard[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
+            playBoard[fromField].setPieceID(-1);//vynuluj starej
             move=true;
             movingProgress = 1;
             nextField = fromField;
@@ -592,13 +589,13 @@ public class PlayState extends State {
             int targetField = 10+currentPlayer*10;
             if(targetField==40) targetField = 0;//pro posledniho hrace
 
-            int targetPiece = data[targetField].getPieceID();//vyhodit panaka
+            int targetPiece = playBoard[targetField].getPieceID();//vyhodit panaka
             if (targetPiece != -1) kickPiece(targetPiece);
 
             movingPiece.setFieldNumber(targetField);//funkci na validovani - podle hrace posovat o 10
-            movingPiece.setPosition(data[targetField].getX(), data[targetField].getY());
-            data[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
-            data[fromField].setPieceID(-1);//vynuluj starej
+            movingPiece.setPosition(playBoard[targetField].getX(), playBoard[targetField].getY());
+            playBoard[targetField].setPieceID(movingPiece.getPieceId());//nastav novej
+            playBoard[fromField].setPieceID(-1);//vynuluj starej
         }
     }
 
@@ -629,10 +626,10 @@ public class PlayState extends State {
                 }
             }
 
-            moveX = data[fromField].getX();
-            moveY = data[fromField].getY();
-            moveX -= data[nextField].getX();
-            moveY -= data[nextField].getY();
+            moveX = playBoard[fromField].getX();
+            moveY = playBoard[fromField].getY();
+            moveX -= playBoard[nextField].getX();
+            moveY -= playBoard[nextField].getY();
             moveX *= step;
             moveY *= step;
         }
@@ -661,8 +658,8 @@ public class PlayState extends State {
 
         int startField = piece[targetPiece].getStartFieldNumber();
         piece[targetPiece].setFieldNumber(startField);
-        piece[targetPiece].setPosition(data[startField].getX(), data[startField].getY());
-        data[startField].setPieceID(targetPiece);
+        piece[targetPiece].setPosition(playBoard[startField].getX(), playBoard[startField].getY());
+        playBoard[startField].setPieceID(targetPiece);
     }
 
     private ArrayList<Integer> getMovablePieces(int currentPlayer, int dice) {
@@ -675,7 +672,7 @@ public class PlayState extends State {
                 if (pieceField < 40 && !(pieceField <= goHomeField() && pieceField + dice > goHomeField())) {
                     targetField = pieceField + dice;
                     if(targetField > 39) targetField -= 40;
-                    int targetPiece = data[targetField].getPieceID();
+                    int targetPiece = playBoard[targetField].getPieceID();
 
                     if(targetPiece == -1) {
                         movablePieces.add(piece[i].getPieceId());
@@ -687,7 +684,7 @@ public class PlayState extends State {
                 }
                 //pro nasazeni nove figurky
                 else if (pieceField < 44 + 8 * currentPlayer && pieceField > 39 + 8 * currentPlayer){
-                    int targetPiece = data[getStartFieldByPlayer()].getPieceID();
+                    int targetPiece = playBoard[getStartFieldByPlayer()].getPieceID();
                     if ((dice == 6)) {
                         if(targetPiece == -1) {
                             movablePieces.add(piece[i].getPieceId());
@@ -703,7 +700,7 @@ public class PlayState extends State {
                 else if(pieceField < 40 && pieceField <= goHomeField() && pieceField + dice > goHomeField()){ //piecefield 44-47 + 8*currentPlayer
                     if(34 + pieceField + dice <= 47 + 10 * currentPlayer) {
                         int targetField = pieceField + dice - goHomeField() + 43 + 8 * currentPlayer;
-                        int targetPiece = data[targetField].getPieceID();
+                        int targetPiece = playBoard[targetField].getPieceID();
                         if(targetPiece == -1 || targetPiece == i) {
                             movablePieces.add(piece[i].getPieceId());
                         }
@@ -767,7 +764,7 @@ public class PlayState extends State {
     }
 
     private void refreshBoard(SpriteBatch sb) {
-        for (GameField aData : data) {
+        for (GameField aData : playBoard) {
 //            aData.getField();
 //            aData.getColor();
 
@@ -776,7 +773,7 @@ public class PlayState extends State {
                         540 + aData.getX() * zoom - fieldSize * 0.5f,
                         worldHalfHeight + aData.getY() * zoom - fieldSize * 0.5f);
             } else {
-                //fieldImg(data[i].getX(), data[i].getY());
+                //fieldImg(playBoard[i].getX(), playBoard[i].getY());
                 sb.draw(fieldImg[aData.getColor()],
                         540 + aData.getX() * zoom - smallFieldSize * 0.5f,
                         worldHalfHeight + aData.getY() * zoom - smallFieldSize * 0.5f,
@@ -954,7 +951,6 @@ public class PlayState extends State {
         System.out.println("Board Disposed");
     }
 
-    //// TODO: 22.02.2017 SAVEGAME
     public void saveGame(){
 
     }

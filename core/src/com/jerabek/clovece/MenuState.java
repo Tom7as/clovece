@@ -2,6 +2,7 @@ package com.jerabek.clovece;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -45,7 +46,8 @@ public class MenuState extends State{
     private TextButton okHelpButton = new TextButton(langStr.get("ok"), uiSkin);
     private Stage stage;
     private int NEW_GAME = 1, RESUME = 2, QUIT = 3, HELP = 4, action, helpOpened = 1, helpSlide = 0;
-    private Texture woodTexture = new Texture("gameImage/wood.png"), logoImage = new Texture("logo.png");
+    private Texture woodTexture = new Texture("gameImage/wood.png"), logoImage = new Texture("logo.png"),
+            bgImage = new Texture("backgroundColorful.png"), menuStripeImage = new Texture("menuStripe.png");
 
     public MenuState(GameStateManager gsm) {
         super(gsm);
@@ -74,7 +76,7 @@ public class MenuState extends State{
         helpLabel = new Label(langStr.get("help"),fontStyle48);
 
 //        Gdx.input.setCatchBackKey(true);
-        logoLabel();
+        //logoLabel();
         helpLabel();
         newGameButton();
 
@@ -191,7 +193,7 @@ public class MenuState extends State{
     }
 
     @Override
-    public void update(float dt) {
+    public void update(float dt) { // single, multi, online, game setting
         switch(action){
             case 1:
                 gsm.set(new SettingState(gsm));
@@ -225,27 +227,29 @@ public class MenuState extends State{
         sb.setProjectionMatrix(cam.combined);
         sb.begin();
 
-        sb.draw(woodTexture, -1080, 0,
-                woodTexture.getWidth() * 8,
-                woodTexture.getHeight() * 7,
-                0, 7,
-                8, 0);
-
-        //sb.draw(woodTexture, -1080, 0 , 2160, worldHalfHeight*2);
+        sb.draw(bgImage, 0, 0, 1080, 1920);
         sb.draw(logoImage, 540 - logoImage.getWidth() , cam.position.y + 400, 288, 288);
+
         sb.end();
 
-        shapeRenderer.setProjectionMatrix(cam.combined);
+//        Gdx.gl.glEnable(GL20.GL_BLEND);
+//        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+//
+//        shapeRenderer.setProjectionMatrix(cam.combined);
+//        shapeRenderer.setColor(0, 0, 0, 0.7f);
+//        shapeRenderer.begin(ShapeType.Filled);
+//        shapeRenderer.rect(200, 0, 680,1920);
 
-        shapeRenderer.setColor(0.49803922f, 0.32941177f, 0.10980392f, 1);
-        shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.rect(-1070, cam.position.y - 480, 1030,1160);
-        shapeRenderer.end();
-
-        shapeRenderer.setColor(0.9411765f, 0.8235294f, 0.6156863f, 1);
-        shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.rect(-1060, cam.position.y - 470, 1010,1140);
-        shapeRenderer.end();
+//        shapeRenderer.end();
+//        shapeRenderer.setColor(0.49803922f, 0.32941177f, 0.10980392f, 1);
+//        shapeRenderer.begin(ShapeType.Filled);
+//        shapeRenderer.rect(-1070, cam.position.y - 480, 1030,1160);
+//        shapeRenderer.end();
+//
+//        shapeRenderer.setColor(0.9411765f, 0.8235294f, 0.6156863f, 1);
+//        shapeRenderer.begin(ShapeType.Filled);
+//        shapeRenderer.rect(-1060, cam.position.y - 470, 1010,1140);
+//        shapeRenderer.end();
 
         stage.act();
         stage.draw();

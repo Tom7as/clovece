@@ -1,4 +1,4 @@
-package com.jerabek.clovece;
+package com.jerabek.clovece.gameObject;
 
 import com.badlogic.gdx.math.Vector2;
 
@@ -13,11 +13,11 @@ public class GameField {
     private int pieceID;
     private int color;
 
-    static GameField[] getData() {
-        return data;
+    public static GameField[] getPlayBoard() {
+        return playBoard;
     }
 
-    private GameField(int sequence, int x, int y, int pieceID, int color) {
+    GameField(int sequence, int x, int y, int pieceID, int color) {
         this.field = sequence; //pořadi na desce 0-39,40-48...
         this.x = x; //souradnice pole -5 , 5
         this.y = y; //souradnice pole -5 , 5
@@ -35,31 +35,31 @@ public class GameField {
 
     public Vector2 presun(int pozice,int kostka){
         Vector2 vector2 = null;
-        vector2.set(data[pozice+1].getX(),data[pozice+1].getY());
+        vector2.set(playBoard[pozice+1].getX(), playBoard[pozice+1].getY());
         return vector2;
     }
 
-    int getField() {
+    public int getField() {
         return field;
     }
 
-    Vector2 getFieldCoordinates(){
+    public Vector2 getFieldCoordinates(){
         return new Vector2(x,y);
     }
 
-    int getX() {
+    public int getX() {
         return x;
     }
 
-    int getY() {
+    public int getY() {
         return y;
     }
 
-    int getColor() {
+    public int getColor() {
         return color;
     }
 
-    private static GameField[] data = {
+    private static GameField[] playBoard = {
             new GameField(0, -1, -5, -1, 4),
             new GameField(1, -1, -4, -1, 0),
             new GameField(2, -1, -3, -1, 0),

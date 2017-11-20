@@ -1,4 +1,4 @@
-package com.jerabek.clovece;
+package com.jerabek.clovece.gameObject;
 
 /**
  * Created by Tomas on 01.03.2017.

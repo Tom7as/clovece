@@ -7,14 +7,12 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
@@ -22,15 +20,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.FocusListener;
-import com.badlogic.gdx.scenes.scene2d.utils.FocusListener.FocusEvent;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.BooleanArray;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.jerabek.clovece.gameObject.SettingData;
 
 import static com.badlogic.gdx.graphics.Texture.TextureWrap.Repeat;
-import static com.jerabek.clovece.CloveceNezlobSe.appHeight;
 import static com.jerabek.clovece.CloveceNezlobSe.appWidth;
 
 /**
@@ -81,17 +76,13 @@ public class SettingState extends State{
         fontStyle36 = new Label.LabelStyle(segoe36Font, Color.BLACK);
         fontStyle96 = new Label.LabelStyle(segoe96Font, Color.BLACK);
 
-
         woodTexture.setWrap(Repeat, Repeat);
 
-//// TODO: 15.03.2017 sehnat HD skin - udelat, srovnat settings
-//// TODO:            přidat reklamu , repeat textury nebo barvu
         backButton();
         rulesButton();
         okRulesButton();
         playButton();
         settingLabel();
-
 
         playersSettings();
         rulesSettings();
@@ -107,11 +98,7 @@ public class SettingState extends State{
 //        imageTextButton = new ImageTextButton("Cuboid", skin, "radio");
 //        buttonGroup.add(imageTextButton);
 //        table.add(imageTextButton);
-
-
-
     }
-
 
     private void rulesSettings() {
         table2 = new Table();

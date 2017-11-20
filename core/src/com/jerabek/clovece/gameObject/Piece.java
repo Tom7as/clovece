@@ -1,4 +1,4 @@
-package com.jerabek.clovece;
+package com.jerabek.clovece.gameObject;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
@@ -28,7 +28,7 @@ public class Piece {
         this.texture = texture;
     }
 
-    Piece(int x, int y, int id, int playerId, int FieldNumber){
+    public Piece(int x, int y, int id, int playerId, int FieldNumber){
         this.x = x;
         this.y = y;
         this.pieceId = id;
@@ -40,19 +40,19 @@ public class Piece {
         this.startFieldNumber = FieldNumber;
     }
 
-    int getStartFieldNumber() {
+    public int getStartFieldNumber() {
         return startFieldNumber;
     }
 
-    int getFieldNumber() {
+    public int getFieldNumber() {
         return fieldNumber;
     }
 
-    void setFieldNumber(int fieldNumber) {
+    public void setFieldNumber(int fieldNumber) {
         this.fieldNumber = fieldNumber;
     }
 
-    Texture getTexture() {
+    public Texture getTexture() {
         return texture;
     }
 
@@ -77,16 +77,16 @@ public class Piece {
         this.y -= y;
     }
 
-    void setPosition(int x, int y) {
+    public void setPosition(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    int getPlayer() {
+    public int getPlayer() {
         return player;
     }
 
-    void dispose(){
+    public void dispose(){
         texture.dispose();
 
     }

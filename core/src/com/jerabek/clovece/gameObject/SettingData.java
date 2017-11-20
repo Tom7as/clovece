@@ -1,4 +1,4 @@
-package com.jerabek.clovece;
+package com.jerabek.clovece.gameObject;
 
 import com.badlogic.gdx.utils.BooleanArray;
 
